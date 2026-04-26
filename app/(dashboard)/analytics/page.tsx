@@ -3,8 +3,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  LineChart, Line, Legend, PieChart, Pie, Cell, Sector
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  LineChart, Line, PieChart, Pie, Cell,
 } from 'recharts';
 import { createClient } from '@/lib/supabase/client';
 import { Transaction, Lead } from '@/types';
@@ -62,6 +62,7 @@ export default function AnalyticsPage() {
     .reduce<Record<string, number>>((acc, t) => { acc[t.category] = (acc[t.category] ?? 0) + t.amount; return acc; }, {});
 
   const pieData = Object.entries(expenseByCategory).map(([name, value]) => ({ name, value }));
+  const totalExpenses = pieData.reduce((s, d) => s + d.value, 0);
 
   const categoryLabels: Record<string, string> = {
     hosting: 'Hosting', claude: 'AI Tools', tools: 'Software', investment: 'Investment', misc: 'Other',
@@ -80,56 +81,31 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
         <h1 className="text-xl font-bold text-slate-900 dark:text-white">Analytics</h1>
         <p className="text-sm text-slate-500 mt-0.5">Revenue trends and lead performance</p>
       </div>
 
-      {/* Revenue chart */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card p-6"
-      >
-        <h2 className="font-semibold text-slate-900 dark:text-white mb-1">Revenue vs Expenses</h2>
-        <p className="text-xs text-slate-400 mb-5">Last 6 months</p>
-        {loading ? (
-          <div className="h-64 skeleton rounded-xl" />
-        ) : (
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={monthlyData} barGap={4}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
-              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94A3B8' }} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94A3B8' }} tickFormatter={v => `$${v}`} />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '16px' }} />
-              <Bar dataKey="revenue" name="Revenue" fill="#3C50E0" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="expenses" name="Expenses" fill="#EF4444" radius={[6, 6, 0, 0]} fillOpacity={0.7} />
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-      </motion.div>
-
-      {/* Profit line + Leads funnel */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Profit + Leads + Expense in one row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Profit trend */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card p-6"
+          className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card p-4"
         >
-          <h2 className="font-semibold text-slate-900 dark:text-white mb-1">Net Profit Trend</h2>
-          <p className="text-xs text-slate-400 mb-5">Last 6 months</p>
-          {loading ? <div className="h-48 skeleton rounded-xl" /> : (
-            <ResponsiveContainer width="100%" height={200}>
+          <h2 className="font-semibold text-slate-900 dark:text-white mb-0.5">Net Profit Trend</h2>
+          <p className="text-xs text-slate-400 mb-3">Last 6 months</p>
+          {loading ? <div className="h-36 skeleton rounded-xl" /> : (
+            <ResponsiveContainer width="100%" height={150}>
               <LineChart data={monthlyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94A3B8' }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94A3B8' }} tickFormatter={v => `$${v}`} />
+                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94A3B8' }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94A3B8' }} tickFormatter={v => `$${v}`} />
                 <Tooltip content={<CustomTooltip />} />
-                <Line type="monotone" dataKey="profit" name="Profit" stroke="#10B981" strokeWidth={2.5} dot={{ fill: '#10B981', r: 4 }} />
+                <Line type="monotone" dataKey="profit" name="Profit" stroke="#10B981" strokeWidth={2.5} dot={{ fill: '#10B981', r: 3 }} />
               </LineChart>
             </ResponsiveContainer>
           )}
@@ -140,21 +116,21 @@ export default function AnalyticsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card p-6"
+          className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card p-4"
         >
-          <h2 className="font-semibold text-slate-900 dark:text-white mb-1">Leads Funnel</h2>
-          <p className="text-xs text-slate-400 mb-5">Conversion pipeline</p>
-          {loading ? <div className="h-48 skeleton rounded-xl" /> : (
-            <div className="space-y-3">
+          <h2 className="font-semibold text-slate-900 dark:text-white mb-0.5">Leads Funnel</h2>
+          <p className="text-xs text-slate-400 mb-3">Conversion pipeline</p>
+          {loading ? <div className="h-36 skeleton rounded-xl" /> : (
+            <div className="space-y-2.5">
               {funnelData.map(({ name, value }, i) => {
                 const pct = leadCounts.total > 0 ? (value / leadCounts.total) * 100 : 0;
                 return (
                   <div key={name}>
-                    <div className="flex justify-between text-sm mb-1">
+                    <div className="flex justify-between text-xs mb-1">
                       <span className="text-slate-600 dark:text-slate-400">{name}</span>
                       <span className="font-semibold text-slate-900 dark:text-white">{value} <span className="text-slate-400 font-normal">({pct.toFixed(0)}%)</span></span>
                     </div>
-                    <div className="h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${pct}%` }}
@@ -167,48 +143,53 @@ export default function AnalyticsPage() {
                 );
               })}
               {leadCounts.total > 0 && (
-                <p className="text-xs text-slate-400 pt-2">
+                <p className="text-xs text-slate-400 pt-1">
                   Close rate: <span className="font-semibold text-primary">{((leadCounts.closed / leadCounts.total) * 100).toFixed(1)}%</span>
                 </p>
               )}
             </div>
           )}
         </motion.div>
-      </div>
 
-      {/* Expense pie */}
-      {!loading && pieData.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card p-6"
-        >
-          <h2 className="font-semibold text-slate-900 dark:text-white mb-1">Expense Categories</h2>
-          <p className="text-xs text-slate-400 mb-5">All time breakdown</p>
-          <div className="flex items-center gap-8">
-            <ResponsiveContainer width={200} height={200}>
-              <PieChart>
-                <Pie data={pieData} cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={3} dataKey="value">
-                  {pieData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
-                </Pie>
-                <Tooltip formatter={(v: number) => formatCurrency(v)} />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="flex-1 space-y-2">
-              {pieData.map(({ name, value }, i) => (
-                <div key={name} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
-                    <span className="text-sm text-slate-600 dark:text-slate-400">{categoryLabels[name] ?? name}</span>
+        {/* Expense pie */}
+        {!loading && pieData.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card p-4"
+          >
+            <h2 className="font-semibold text-slate-900 dark:text-white mb-0.5">Expense Categories</h2>
+            <p className="text-xs text-slate-400 mb-3">All time</p>
+            <div className="flex flex-col items-center gap-2">
+              <div className="relative w-full flex items-center justify-center" style={{ height: 140 }}>
+                <ResponsiveContainer width="100%" height={140}>
+                  <PieChart>
+                    <Pie data={pieData} cx="50%" cy="50%" innerRadius={38} outerRadius={60} paddingAngle={3} dataKey="value">
+                      {pieData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                    </Pie>
+                    <Tooltip formatter={(v: number) => formatCurrency(v)} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="text-center">
+                    <p className="text-[10px] text-slate-400 leading-none mb-0.5">Total</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white leading-none">{formatCurrency(totalExpenses)}</p>
                   </div>
-                  <span className="text-sm font-semibold text-slate-900 dark:text-white">{formatCurrency(value)}</span>
                 </div>
-              ))}
+              </div>
+              <div className="flex flex-wrap justify-center gap-x-3 gap-y-1">
+                {pieData.map(({ name }, i) => (
+                  <div key={name} className="flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
+                    <span className="text-xs text-slate-500">{categoryLabels[name] ?? name}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        </motion.div>
-      )}
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 }
