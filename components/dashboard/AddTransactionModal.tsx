@@ -11,12 +11,10 @@ interface AddTransactionModalProps {
 }
 
 const EXPENSE_CATEGORIES = ['hosting', 'claude', 'tools', 'investment', 'misc'];
-const INCOME_CATEGORIES = ['website_sale', 'retainer', 'withdrawal', 'misc'];
 
 export default function AddTransactionModal({ onClose, onSaved }: AddTransactionModalProps) {
   const [form, setForm] = useState({
-    type: 'income' as 'income' | 'expense',
-    category: 'website_sale',
+    category: 'hosting',
     amount: '',
     description: '',
     date: new Date().toISOString().split('T')[0],
@@ -24,23 +22,13 @@ export default function AddTransactionModal({ onClose, onSaved }: AddTransaction
   const [saving, setSaving] = useState(false);
   const supabase = createClient();
 
-  const categories = form.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
-
-  const handleTypeChange = (type: 'income' | 'expense') => {
-    setForm(f => ({
-      ...f,
-      type,
-      category: type === 'income' ? 'website_sale' : 'hosting',
-    }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.amount || parseFloat(form.amount) <= 0) { toast.error('Enter a valid amount'); return; }
     setSaving(true);
 
     const { error } = await supabase.from('transactions').insert({
-      type: form.type,
+      type: 'expense',
       category: form.category,
       amount: parseFloat(form.amount),
       description: form.description || null,
@@ -53,8 +41,7 @@ export default function AddTransactionModal({ onClose, onSaved }: AddTransaction
   };
 
   const categoryLabels: Record<string, string> = {
-    hosting: 'Hosting', claude: 'Claude / AI', tools: 'Tools', investment: 'Investment',
-    misc: 'Miscellaneous', website_sale: 'Website Sale', retainer: 'Retainer', withdrawal: 'Withdrawal',
+    hosting: 'Hosting', claude: 'Claude / AI', tools: 'Tools', investment: 'Investment', misc: 'Miscellaneous',
   };
 
   return (
@@ -68,24 +55,6 @@ export default function AddTransactionModal({ onClose, onSaved }: AddTransaction
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Type toggle */}
-          <div className="flex rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700">
-            {(['income', 'expense'] as const).map(t => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => handleTypeChange(t)}
-                className={`flex-1 py-2 text-sm font-medium transition-colors cursor-pointer capitalize ${
-                  form.type === t
-                    ? t === 'income' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'
-                    : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'
-                }`}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Amount ($)</label>
@@ -117,7 +86,7 @@ export default function AddTransactionModal({ onClose, onSaved }: AddTransaction
               onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
               className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary cursor-pointer"
             >
-              {categories.map(c => <option key={c} value={c}>{categoryLabels[c]}</option>)}
+              {EXPENSE_CATEGORIES.map(c => <option key={c} value={c}>{categoryLabels[c]}</option>)}
             </select>
           </div>
 
