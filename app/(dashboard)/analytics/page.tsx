@@ -152,15 +152,19 @@ export default function AnalyticsPage() {
         </motion.div>
 
         {/* Expense pie */}
-        {!loading && pieData.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card p-4"
-          >
-            <h2 className="font-semibold text-slate-900 dark:text-white mb-0.5">Expense Categories</h2>
-            <p className="text-xs text-slate-400 mb-3">All time</p>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card p-4"
+        >
+          <h2 className="font-semibold text-slate-900 dark:text-white mb-0.5">Expense Categories</h2>
+          <p className="text-xs text-slate-400 mb-3">All time</p>
+          {loading ? (
+            <div className="h-36 skeleton rounded-xl" />
+          ) : pieData.length === 0 ? (
+            <div className="h-36 flex items-center justify-center text-xs text-slate-400">No expense data</div>
+          ) : (
             <div className="flex flex-col items-center gap-2">
               <div className="relative w-full flex items-center justify-center" style={{ height: 140 }}>
                 <ResponsiveContainer width="100%" height={140}>
@@ -187,8 +191,8 @@ export default function AnalyticsPage() {
                 ))}
               </div>
             </div>
-          </motion.div>
-        )}
+          )}
+        </motion.div>
       </div>
     </div>
   );
