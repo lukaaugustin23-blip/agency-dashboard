@@ -113,14 +113,6 @@ export default function AddProjectModal({ onClose, onSaved }: AddProjectModalPro
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Hosting Cost ($)</label>
-            <input type="number" min="0" step="0.01" value={form.hosting_cost}
-              onChange={e => setForm(f => ({ ...f, hosting_cost: e.target.value }))}
-              placeholder="0"
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-          </div>
-
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Manager</label>
