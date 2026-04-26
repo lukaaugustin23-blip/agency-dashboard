@@ -38,7 +38,7 @@ export default function TasksPage() {
   const [editTask, setEditTask] = useState<Task | null>(null);
   const [form, setForm] = useState(DEFAULT_FORM);
   const [saving, setSaving] = useState(false);
-  const [filterAssignee, setFilterAssignee] = useState<AssignedTo | 'All'>('All');
+  const [filterAssignee, setFilterAssignee] = useState<AssignedTo>('Both');
   const supabase = createClient();
 
   const fetchTasks = useCallback(async () => {
@@ -101,7 +101,7 @@ export default function TasksPage() {
     toast.success('Task deleted');
   };
 
-  const filteredTasks = tasks.filter(t => filterAssignee === 'All' || t.assigned_to === filterAssignee);
+  const filteredTasks = tasks.filter(t => filterAssignee === 'Both' || t.assigned_to === filterAssignee);
 
   const isOverdue = (t: Task) => t.due_date && t.status !== 'done' && new Date(t.due_date) < new Date();
 
@@ -119,7 +119,7 @@ export default function TasksPage() {
 
       {/* Assignee filter */}
       <div className="flex gap-2">
-        {(['All', 'Luka', 'Samvit', 'Both'] as const).map(a => (
+        {(['Both', 'Luka', 'Samvit'] as const).map(a => (
           <button
             key={a}
             onClick={() => setFilterAssignee(a)}
