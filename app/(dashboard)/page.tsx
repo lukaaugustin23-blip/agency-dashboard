@@ -13,7 +13,6 @@ import { Transaction, Project } from '@/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
 import AddTransactionModal from '@/components/dashboard/AddTransactionModal';
-import AddProjectModal from '@/components/dashboard/AddProjectModal';
 
 const MONTHLY_GOAL = 10000;
 
@@ -22,7 +21,6 @@ export default function OverviewPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [showTxModal, setShowTxModal] = useState(false);
-  const [showProjectModal, setShowProjectModal] = useState(false);
   const supabase = createClient();
 
   const fetchAll = useCallback(async () => {
@@ -116,13 +114,6 @@ export default function OverviewPage() {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => setShowProjectModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-medium hover:border-primary hover:text-primary transition-colors cursor-pointer shadow-sm"
-          >
-            <Briefcase size={16} />
-            Add Project
-          </button>
-          <button
             onClick={() => setShowTxModal(true)}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-600 transition-colors cursor-pointer shadow-sm"
           >
@@ -185,12 +176,6 @@ export default function OverviewPage() {
             <h2 className="font-semibold text-slate-900 dark:text-white text-sm">Projects</h2>
             <p className="text-xs text-slate-400 mt-0.5">All clients — realtime</p>
           </div>
-          <button
-            onClick={() => setShowProjectModal(true)}
-            className="text-xs text-primary font-medium hover:underline cursor-pointer"
-          >
-            + Add project
-          </button>
         </div>
         {loading ? (
           <div className="p-6 space-y-3">
@@ -200,7 +185,6 @@ export default function OverviewPage() {
           <div className="p-8 text-center">
             <Briefcase size={28} className="text-slate-300 mx-auto mb-2" />
             <p className="text-sm text-slate-400">No projects yet</p>
-            <button onClick={() => setShowProjectModal(true)} className="mt-2 text-xs text-primary font-medium cursor-pointer">+ Add first project</button>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -400,9 +384,6 @@ export default function OverviewPage() {
 
       {showTxModal && (
         <AddTransactionModal onClose={() => setShowTxModal(false)} onSaved={() => { setShowTxModal(false); fetchAll(); }} />
-      )}
-      {showProjectModal && (
-        <AddProjectModal onClose={() => setShowProjectModal(false)} onSaved={() => { setShowProjectModal(false); fetchAll(); }} />
       )}
     </div>
   );
