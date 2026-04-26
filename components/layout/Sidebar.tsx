@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Users, Briefcase, CheckSquare,
-  BarChart2, ChevronLeft, ChevronRight, X
+  BarChart2, BookOpen, ChevronLeft, ChevronRight, X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -15,6 +15,7 @@ const navItems = [
   { href: '/projects', label: 'Projects', icon: Briefcase },
   { href: '/tasks', label: 'Tasks', icon: CheckSquare },
   { href: '/analytics', label: 'Analytics', icon: BarChart2 },
+  { href: '/scripts', label: 'Scripts', icon: BookOpen },
 ];
 
 interface SidebarProps {
