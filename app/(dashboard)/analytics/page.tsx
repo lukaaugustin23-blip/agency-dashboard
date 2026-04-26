@@ -16,16 +16,19 @@ const CHART_COLORS = ['#3C50E0', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 export default function AnalyticsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [projects, setProjects] = useState<{ hosting_cost: number; status: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
   const fetchData = useCallback(async () => {
-    const [{ data: txns }, { data: leadsData }] = await Promise.all([
+    const [{ data: txns }, { data: leadsData }, { data: projectsData }] = await Promise.all([
       supabase.from('transactions').select('*').order('date'),
       supabase.from('leads').select('*'),
+      supabase.from('projects').select('hosting_cost, status'),
     ]);
     if (txns) setTransactions(txns);
     if (leadsData) setLeads(leadsData);
+    if (projectsData) setProjects(projectsData);
     setLoading(false);
   }, []);
 
@@ -56,10 +59,15 @@ export default function AnalyticsPage() {
     { name: 'Closed', value: leadCounts.closed },
   ];
 
-  // Expense breakdown (all time)
+  // Expense breakdown (all time) — hosting sourced from projects to avoid double-counting
   const expenseByCategory = transactions
-    .filter(t => t.type === 'expense')
+    .filter(t => t.type === 'expense' && t.category !== 'hosting')
     .reduce<Record<string, number>>((acc, t) => { acc[t.category] = (acc[t.category] ?? 0) + t.amount; return acc; }, {});
+
+  const projectHostingTotal = projects
+    .filter(p => p.status === 'active' && p.hosting_cost > 0)
+    .reduce((s, p) => s + p.hosting_cost, 0);
+  if (projectHostingTotal > 0) expenseByCategory['hosting'] = projectHostingTotal;
 
   const pieData = Object.entries(expenseByCategory).map(([name, value]) => ({ name, value }));
   const totalExpenses = pieData.reduce((s, d) => s + d.value, 0);

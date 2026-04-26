@@ -95,14 +95,33 @@ export default function ProjectsPage() {
       status: form.status,
       start_date: form.start_date || null,
     };
+    const hosting = payload.hosting_cost;
+    const today = form.start_date || new Date().toISOString().split('T')[0];
 
-    const { error } = editProject
-      ? await supabase.from('projects').update(payload).eq('id', editProject.id)
-      : await supabase.from('projects').insert(payload);
-
-    setSaving(false);
-    if (error) toast.error('Failed to save');
-    else { toast.success(editProject ? 'Project updated' : 'Project added'); fetchProjects(); setShowModal(false); }
+    if (editProject) {
+      const { error } = await supabase.from('projects').update(payload).eq('id', editProject.id);
+      if (!error && hosting !== editProject.hosting_cost) {
+        const { data: existing } = await supabase.from('transactions').select('id').eq('project_id', editProject.id).eq('category', 'hosting').maybeSingle();
+        if (existing) {
+          hosting > 0
+            ? await supabase.from('transactions').update({ amount: hosting, description: `Hosting — ${form.client_name}` }).eq('id', existing.id)
+            : await supabase.from('transactions').delete().eq('id', existing.id);
+        } else if (hosting > 0) {
+          await supabase.from('transactions').insert({ type: 'expense', category: 'hosting', amount: hosting, description: `Hosting — ${form.client_name}`, date: today, project_id: editProject.id });
+        }
+      }
+      setSaving(false);
+      if (error) toast.error('Failed to save');
+      else { toast.success('Project updated'); fetchProjects(); setShowModal(false); }
+    } else {
+      const { data: newProject, error } = await supabase.from('projects').insert(payload).select().single();
+      if (!error && newProject && hosting > 0) {
+        await supabase.from('transactions').insert({ type: 'expense', category: 'hosting', amount: hosting, description: `Hosting — ${form.client_name}`, date: today, project_id: newProject.id });
+      }
+      setSaving(false);
+      if (error) toast.error('Failed to save');
+      else { toast.success('Project added'); fetchProjects(); setShowModal(false); }
+    }
   };
 
   const handleDelete = async (id: string) => {

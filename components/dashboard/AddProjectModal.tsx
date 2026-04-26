@@ -29,6 +29,8 @@ export default function AddProjectModal({ onClose, onSaved }: AddProjectModalPro
 
     const retainer = parseFloat(form.retainer_fee) || 0;
     const monthly = parseFloat(form.monthly_payment) || 0;
+    const hosting = parseFloat(form.hosting_cost) || 0;
+    const today = form.start_date || new Date().toISOString().split('T')[0];
 
     const { data: project, error } = await supabase.from('projects').insert({
       client_name: form.client_name,
@@ -36,22 +38,17 @@ export default function AddProjectModal({ onClose, onSaved }: AddProjectModalPro
       description: form.description || null,
       retainer_fee: retainer,
       monthly_payment: monthly,
-      hosting_cost: parseFloat(form.hosting_cost) || 0,
+      hosting_cost: hosting,
       manager: form.manager,
       status: form.status,
       start_date: form.start_date || null,
     }).select().single();
 
-    // Auto-create income transaction for retainer if present
-    if (!error && project && retainer > 0) {
-      await supabase.from('transactions').insert({
-        type: 'income',
-        category: 'retainer',
-        amount: retainer,
-        description: `Retainer — ${form.client_name}`,
-        date: form.start_date || new Date().toISOString().split('T')[0],
-        project_id: project.id,
-      });
+    if (!error && project) {
+      const txns = [];
+      if (retainer > 0) txns.push({ type: 'income', category: 'retainer', amount: retainer, description: `Retainer — ${form.client_name}`, date: today, project_id: project.id });
+      if (hosting > 0) txns.push({ type: 'expense', category: 'hosting', amount: hosting, description: `Hosting — ${form.client_name}`, date: today, project_id: project.id });
+      if (txns.length > 0) await supabase.from('transactions').insert(txns);
     }
 
     setSaving(false);
