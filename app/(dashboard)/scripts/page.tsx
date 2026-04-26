@@ -338,7 +338,7 @@ export default function ScriptsPage() {
 
             {/* Response carousel */}
             <AnimatePresence mode="wait">
-              {selectedObjection && (
+              {selectedObjection && currentResponses.length > 0 && (
                 <motion.div
                   ref={responseRef}
                   key={selectedObjection}
@@ -352,7 +352,7 @@ export default function ScriptsPage() {
                   <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl overflow-hidden">
                     <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                       <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Response {safeResponseIndex + 1} of {currentResponses.length}</p>
-                      <button onClick={() => handleDeleteResponse(currentResponses[safeResponseIndex].id)}
+                      <button onClick={() => currentResponses[safeResponseIndex] && handleDeleteResponse(currentResponses[safeResponseIndex].id)}
                         className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg cursor-pointer transition-colors">
                         <Trash2 size={13} className="text-red-400" />
                       </button>
