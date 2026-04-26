@@ -261,7 +261,6 @@ export default function OverviewPage() {
           ) : Object.keys(expensesByCategory).length === 0 ? (
             <div className="p-8 text-center">
               <p className="text-sm text-slate-400">No expenses this month</p>
-              <button onClick={() => setShowTxModal(true)} className="mt-3 text-xs text-primary font-medium cursor-pointer">+ Add expense</button>
             </div>
           ) : (
             <div className="divide-y divide-slate-50 dark:divide-slate-800">
@@ -301,7 +300,6 @@ export default function OverviewPage() {
           ) : websitesSold.length === 0 ? (
             <div className="p-8 text-center">
               <p className="text-sm text-slate-400">No websites sold yet</p>
-              <button onClick={() => setShowTxModal(true)} className="mt-3 text-xs text-primary font-medium cursor-pointer">+ Record first sale</button>
             </div>
           ) : (
             <div className="divide-y divide-slate-50 dark:divide-slate-800 max-h-72 overflow-y-auto">
