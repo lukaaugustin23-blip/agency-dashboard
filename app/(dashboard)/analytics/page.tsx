@@ -87,30 +87,30 @@ export default function AnalyticsPage() {
         <p className="text-sm text-slate-500 mt-0.5">Revenue trends and lead performance</p>
       </div>
 
-      {/* Profit + Leads + Expense in one row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Profit trend */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card p-4"
-        >
-          <h2 className="font-semibold text-slate-900 dark:text-white mb-0.5">Net Profit Trend</h2>
-          <p className="text-xs text-slate-400 mb-3">Last 6 months</p>
-          {loading ? <div className="h-36 skeleton rounded-xl" /> : (
-            <ResponsiveContainer width="100%" height={150}>
-              <LineChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94A3B8' }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94A3B8' }} tickFormatter={v => `$${v}`} />
-                <Tooltip content={<CustomTooltip />} />
-                <Line type="monotone" dataKey="profit" name="Profit" stroke="#10B981" strokeWidth={2.5} dot={{ fill: '#10B981', r: 3 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          )}
-        </motion.div>
+      {/* Net Profit Trend — full width */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card p-4"
+      >
+        <h2 className="font-semibold text-slate-900 dark:text-white mb-0.5">Net Profit Trend</h2>
+        <p className="text-xs text-slate-400 mb-3">Last 6 months</p>
+        {loading ? <div className="h-36 skeleton rounded-xl" /> : (
+          <ResponsiveContainer width="100%" height={160}>
+            <LineChart data={monthlyData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94A3B8' }} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94A3B8' }} tickFormatter={v => `$${v}`} />
+              <Tooltip content={<CustomTooltip />} />
+              <Line type="monotone" dataKey="profit" name="Profit" stroke="#10B981" strokeWidth={2.5} dot={{ fill: '#10B981', r: 3 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        )}
+      </motion.div>
 
+      {/* Leads + Expense 50/50 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Leads funnel */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -196,4 +196,5 @@ export default function AnalyticsPage() {
       </div>
     </div>
   );
+
 }
