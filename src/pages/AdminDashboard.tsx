@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { signOut } from '../lib/auth'
 import type { User } from '@supabase/supabase-js'
-import { CALLERS, ADMINS } from '../data/mockData'
+import { CALLERS, ADMINS, CALLER_COLOR_BY_ID } from '../data/mockData'
 import { useAppData } from '../contexts/AppDataContext'
 
 type Theme = 'light' | 'dark'
@@ -41,25 +41,27 @@ const THEMES = {
 
 type C = typeof THEMES.light
 
-const FOLLOWUPS_INITIAL = [
-  { id: 1, task: 'Follow up with Mike R.',        due: 'Due today',    assignee: 'Julian', status: 'today'    as const },
-  { id: 2, task: 'Send proposal to Acme Corp',    due: 'Overdue',      assignee: 'Alex',   status: 'overdue'  as const },
-  { id: 3, task: 'Schedule demo with BrightStar', due: 'Due tomorrow', assignee: 'Hudson', status: 'upcoming' as const },
-  { id: 4, task: 'Call back Vertex Solutions',    due: 'Due today',    assignee: 'Meissa', status: 'today'    as const },
-  { id: 5, task: 'Send contract to Luna Digital', due: 'Due in 2 days', assignee: 'Aaron', status: 'upcoming' as const },
-]
-
 const STATUS_COLORS = { overdue: '#ef4444', today: '#f59e0b', upcoming: '#10b981' }
 
-const ACTIVITY = [
-  { id: 1, text: 'Alex closed a deal with TechFlow Inc',       time: '2 hours ago',  dot: '#0ea5e9' },
-  { id: 2, text: 'Julian scheduled a demo with Nexus Co',      time: '4 hours ago',  dot: '#f59e0b' },
-  { id: 3, text: 'Hudson added a new lead: Prism Labs',        time: 'Yesterday',    dot: '#8b5cf6' },
-  { id: 4, text: 'Meissa sent proposal to RedOak',             time: 'Yesterday',    dot: '#f43f5e' },
-  { id: 5, text: 'Aaron completed follow-up with Wave Digital', time: '2 days ago', dot: '#10b981' },
-]
+type FollowUpStatus = 'overdue' | 'today' | 'upcoming'
+type FollowUpItem = { id: string; task: string; due: string; assignee: string; status: FollowUpStatus; source: 'derived' | 'local' }
+type ActivityItem = { id: string; text: string; time: string; dot: string }
 
-function FollowUpRow({ item, c, last, editMode, onDelete }: { item: typeof FOLLOWUPS_INITIAL[0]; c: C; last: boolean; editMode: boolean; onDelete: (id: number) => void }) {
+function relativeDate(dateStr: string): string {
+  const diff = Math.floor((Date.now() - new Date(dateStr + 'T12:00:00').getTime()) / 86400000)
+  if (diff === 0) return 'Today'
+  if (diff === 1) return 'Yesterday'
+  if (diff < 7) return `${diff} days ago`
+  return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+function getCallerName(callerId: string): string {
+  return CALLERS.find(c => c.id === callerId)?.name
+    ?? ADMINS.find(a => a.id === callerId)?.name
+    ?? callerId
+}
+
+function FollowUpRow({ item, c, last, onDelete }: { item: FollowUpItem; c: C; last: boolean; onDelete: (id: string) => void }) {
   const [checked, setChecked] = useState(false)
   const [hovCheck, setHovCheck] = useState(false)
   const dotColor = STATUS_COLORS[item.status]
@@ -115,8 +117,8 @@ function FollowUpRow({ item, c, last, editMode, onDelete }: { item: typeof FOLLO
         width: 8, height: 8, borderRadius: '50%', background: dotColor, flexShrink: 0,
       }} />
 
-      {/* Delete in edit mode */}
-      {editMode && (
+      {/* Delete locally-added items */}
+      {item.source === 'local' && (
         <button
           onClick={() => onDelete(item.id)}
           style={{
@@ -135,7 +137,7 @@ function FollowUpRow({ item, c, last, editMode, onDelete }: { item: typeof FOLLO
   )
 }
 
-function ActivityRow({ item, c, last }: { item: typeof ACTIVITY[0]; c: C; last: boolean }) {
+function ActivityRow({ item, c, last }: { item: ActivityItem; c: C; last: boolean }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'flex-start', gap: 10,
@@ -308,7 +310,7 @@ export default function AdminDashboard() {
   })
   const [user, setUser] = useState<User | null>(null)
   const [signOutHov, setSignOutHov] = useState(false)
-  const [followups, setFollowups] = useState(FOLLOWUPS_INITIAL)
+  const [localFollowups, setLocalFollowups] = useState<FollowUpItem[]>([])
   const [newFollowupText, setNewFollowupText] = useState('')
   const { leads } = useAppData()
 
@@ -336,6 +338,43 @@ export default function AdminDashboard() {
       const revenue = callerWon.reduce((s, l) => s + (l.dealValue ?? 0), 0)
       return { name: caller.name, email: caller.email, sales: callerWon.length, revenue, color: caller.color }
     }).sort((a, b) => b.revenue - a.revenue || a.name.localeCompare(b.name))
+  }, [leads])
+
+  const followupsFromLeads = useMemo<FollowUpItem[]>(() => {
+    return leads
+      .filter(l => ['contacted', 'maybe', 'meeting', 'proposal'].includes(l.stage))
+      .map(l => {
+        const days = Math.floor((Date.now() - new Date(l.addedDate + 'T12:00:00').getTime()) / 86400000)
+        let due: string
+        let status: FollowUpStatus
+        if (days > 7)      { due = 'Overdue';    status = 'overdue'  }
+        else if (days >= 3) { due = 'Due today';  status = 'today'    }
+        else               { due = 'Due soon';   status = 'upcoming' }
+        return { id: l.id, task: `Follow up with ${l.business}`, due, assignee: getCallerName(l.callerId), status, source: 'derived' as const }
+      })
+      .sort((a, b) => ({ overdue: 0, today: 1, upcoming: 2 }[a.status]) - ({ overdue: 0, today: 1, upcoming: 2 }[b.status]))
+  }, [leads])
+
+  const allFollowups = [...followupsFromLeads, ...localFollowups]
+
+  const activityItems = useMemo<ActivityItem[]>(() => {
+    const events: ActivityItem[] = []
+    for (const lead of leads) {
+      const name = getCallerName(lead.callerId)
+      const dot = CALLER_COLOR_BY_ID[lead.callerId] ?? '#94a3b8'
+      if (lead.stage === 'won' && lead.closedDate) {
+        events.push({ id: `won-${lead.id}`, text: `${name} closed a deal with ${lead.business}`, time: relativeDate(lead.closedDate), dot })
+      } else if (lead.stage === 'lost' && lead.lostDate) {
+        events.push({ id: `lost-${lead.id}`, text: `${name}'s lead ${lead.business} was lost`, time: relativeDate(lead.lostDate), dot })
+      } else if (lead.stage === 'meeting') {
+        events.push({ id: `meeting-${lead.id}`, text: `${name} scheduled a meeting with ${lead.business}`, time: relativeDate(lead.addedDate), dot })
+      } else if (lead.stage === 'proposal') {
+        events.push({ id: `proposal-${lead.id}`, text: `${name} sent a proposal to ${lead.business}`, time: relativeDate(lead.addedDate), dot })
+      }
+      events.push({ id: `added-${lead.id}`, text: `${name} added a new lead: ${lead.business}`, time: relativeDate(lead.addedDate), dot })
+    }
+    // Sort by most recent (use the date embedded in time is lossy, so sort by leads order which is newest first)
+    return events.slice(0, 10)
   }, [leads])
 
   useEffect(() => {
@@ -554,47 +593,50 @@ export default function AdminDashboard() {
               <p style={{ margin: '0 0 16px', color: c.muted, fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
                 Follow-ups Due
               </p>
-              <div>
-                {followups.map((item, i) => (
-                  <FollowUpRow
-                    key={item.id}
-                    item={item}
-                    c={c}
-                    last={i === followups.length - 1}
-                    editMode={true}
-                    onDelete={id => setFollowups(prev => prev.filter(f => f.id !== id))}
-                  />
-                ))}
-              </div>
+              {allFollowups.length === 0 ? (
+                <p style={{ fontSize: 13, color: c.muted, textAlign: 'center', padding: '16px 0' }}>No follow-ups yet</p>
+              ) : (
+                <div>
+                  {allFollowups.map((item, i) => (
+                    <FollowUpRow
+                      key={item.id}
+                      item={item}
+                      c={c}
+                      last={i === allFollowups.length - 1}
+                      onDelete={id => setLocalFollowups(prev => prev.filter(f => f.id !== id))}
+                    />
+                  ))}
+                </div>
+              )}
               <div style={{ marginTop: 10, display: 'flex', gap: 6 }}>
-                  <input
-                    value={newFollowupText}
-                    onChange={e => setNewFollowupText(e.target.value)}
-                    placeholder="Add follow-up…"
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' && newFollowupText.trim()) {
-                        setFollowups(prev => [...prev, { id: Date.now(), task: newFollowupText.trim(), due: 'Due today', assignee: '', status: 'today' as const }])
-                        setNewFollowupText('')
-                      }
-                    }}
-                    style={{
-                      flex: 1, padding: '6px 10px', fontSize: 12,
-                      background: c.bg3, border: `1px solid ${c.border}`, borderRadius: 8,
-                      color: c.text, outline: 'none', fontFamily: '"Plus Jakarta Sans", sans-serif',
-                    }}
-                  />
-                  <button
-                    onClick={() => {
-                      if (!newFollowupText.trim()) return
-                      setFollowups(prev => [...prev, { id: Date.now(), task: newFollowupText.trim(), due: 'Due today', assignee: '', status: 'today' as const }])
+                <input
+                  value={newFollowupText}
+                  onChange={e => setNewFollowupText(e.target.value)}
+                  placeholder="Add follow-up…"
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && newFollowupText.trim()) {
+                      setLocalFollowups(prev => [...prev, { id: Date.now().toString(), task: newFollowupText.trim(), due: 'Due today', assignee: '', status: 'today' as const, source: 'local' as const }])
                       setNewFollowupText('')
-                    }}
-                    style={{
-                      padding: '6px 12px', fontSize: 11, fontWeight: 600,
-                      background: c.accent, color: '#fff', border: 'none',
-                      borderRadius: 8, cursor: 'pointer', fontFamily: '"Plus Jakarta Sans", sans-serif',
-                    }}
-                  >Add</button>
+                    }
+                  }}
+                  style={{
+                    flex: 1, padding: '6px 10px', fontSize: 12,
+                    background: c.bg3, border: `1px solid ${c.border}`, borderRadius: 8,
+                    color: c.text, outline: 'none', fontFamily: '"Plus Jakarta Sans", sans-serif',
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    if (!newFollowupText.trim()) return
+                    setLocalFollowups(prev => [...prev, { id: Date.now().toString(), task: newFollowupText.trim(), due: 'Due today', assignee: '', status: 'today' as const, source: 'local' as const }])
+                    setNewFollowupText('')
+                  }}
+                  style={{
+                    padding: '6px 12px', fontSize: 11, fontWeight: 600,
+                    background: c.accent, color: '#fff', border: 'none',
+                    borderRadius: 8, cursor: 'pointer', fontFamily: '"Plus Jakarta Sans", sans-serif',
+                  }}
+                >Add</button>
               </div>
             </div>
 
@@ -605,11 +647,15 @@ export default function AdminDashboard() {
               <p style={{ margin: '0 0 16px', color: c.muted, fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
                 Recent Activity
               </p>
-              <div>
-                {ACTIVITY.map((item, i) => (
-                  <ActivityRow key={item.id} item={item} c={c} last={i === ACTIVITY.length - 1} />
-                ))}
-              </div>
+              {activityItems.length === 0 ? (
+                <p style={{ fontSize: 13, color: c.muted, textAlign: 'center', padding: '16px 0' }}>No activity yet</p>
+              ) : (
+                <div>
+                  {activityItems.map((item, i) => (
+                    <ActivityRow key={item.id} item={item} c={c} last={i === activityItems.length - 1} />
+                  ))}
+                </div>
+              )}
             </div>
 
           </aside>
