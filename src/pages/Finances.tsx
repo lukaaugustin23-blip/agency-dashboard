@@ -179,11 +179,17 @@ export default function Finances() {
     }
   }), [leads, callerFees])
 
-  const adminStats = useMemo(() => ADMINS.map(admin => {
-    const found = leads.filter(l => l.callerId === admin.id && l.stage === 'won')
-    const finderEarnings = found.reduce((s, l) => s + Math.round((l.dealValue ?? 0) * admin.finderBonus / 100), 0)
-    return { ...admin, deals: found.length, finderEarnings }
-  }), [leads])
+  const adminStats = useMemo(() => {
+    const adminIds = new Set(ADMINS.map(a => a.id))
+    const adminWon = leads.filter(l => adminIds.has(l.callerId) && l.stage === 'won')
+    const totalAdminRevenue = adminWon.reduce((s, l) => s + (l.dealValue ?? 0), 0)
+    const eachFinderEarns = Math.round(totalAdminRevenue * 0.10) // 20% pool split equally = 10% each
+    return ADMINS.map(admin => ({
+      ...admin,
+      deals: adminWon.filter(l => l.callerId === admin.id).length,
+      finderEarnings: eachFinderEarns,
+    }))
+  }, [leads])
 
   const { chartData, dotTimestamps, dateRangeLabel, xTicks, nowMs } = useMemo(() => { // eslint-disable-line
     const now = new Date()
@@ -199,12 +205,6 @@ export default function Finances() {
       preLaunch[caller.name] = wonLeads
         .filter(l => l.callerId === caller.id && l.closedDate! < LAUNCH_DATE)
         .reduce((s, l) => s + Math.round((l.dealValue ?? 0) * fee / 100), 0)
-    })
-    // Admin finder bonus starting values (20% of their pre-launch found deals)
-    ADMINS.forEach(admin => {
-      preLaunch[admin.name] = wonLeads
-        .filter(l => l.callerId === admin.id && l.closedDate! < LAUNCH_DATE)
-        .reduce((s, l) => s + Math.round((l.dealValue ?? 0) * admin.finderBonus / 100), 0)
     })
 
     const postDeals = wonLeads.filter(l => l.closedDate! >= LAUNCH_DATE)
@@ -245,11 +245,6 @@ export default function Finances() {
         row[caller.name] = preLaunch[caller.name] + postDeals
           .filter(l => l.callerId === caller.id && new Date(l.closedDate! + 'T12:00:00').getTime() <= ts)
           .reduce((s, l) => s + Math.round((l.dealValue ?? 0) * fee / 100), 0)
-      })
-      ADMINS.forEach(admin => {
-        row[admin.name] = preLaunch[admin.name] + postDeals
-          .filter(l => l.callerId === admin.id && new Date(l.closedDate! + 'T12:00:00').getTime() <= ts)
-          .reduce((s, l) => s + Math.round((l.dealValue ?? 0) * admin.finderBonus / 100), 0)
       })
       return row
     })
@@ -511,31 +506,6 @@ export default function Finances() {
                       activeDot={{ fill: caller.color, r: 6, strokeWidth: 0 }}
                     />
                   ))}
-                  {/* Admin finder-bonus lines — dashed, no fill */}
-                  {adminStats.map(admin => (
-                    <Area
-                      key={admin.name}
-                      type="monotone"
-                      dataKey={admin.name}
-                      stroke={admin.color}
-                      strokeWidth={2}
-                      strokeDasharray="6 4"
-                      strokeOpacity={0.7}
-                      fill="none"
-                      dot={(props: Record<string, unknown>) => {
-                        const payload = props.payload as { ts: number }
-                        if (!dotTimestamps.has(payload?.ts)) return <g key={String(props.key)} />
-                        return (
-                          <circle
-                            key={String(props.key)}
-                            cx={Number(props.cx)} cy={Number(props.cy)}
-                            r={4} fill={admin.color}
-                          />
-                        )
-                      }}
-                      activeDot={{ fill: admin.color, r: 5, strokeWidth: 0 }}
-                    />
-                  ))}
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -546,15 +516,6 @@ export default function Finances() {
                 <div key={caller.name} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <div style={{ width: 10, height: 10, borderRadius: '50%', background: caller.color, flexShrink: 0 }} />
                   <span style={{ fontSize: 12, fontWeight: 500, color: c.textSecond }}>{caller.name}</span>
-                </div>
-              ))}
-              <div style={{ width: 1, height: 14, background: c.border, alignSelf: 'center' }} />
-              {adminStats.map(admin => (
-                <div key={admin.name} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <svg width="18" height="2" style={{ flexShrink: 0 }}>
-                    <line x1="0" y1="1" x2="18" y2="1" stroke={admin.color} strokeWidth="2" strokeDasharray="5 3" strokeOpacity="0.7" />
-                  </svg>
-                  <span style={{ fontSize: 12, fontWeight: 500, color: c.muted }}>{admin.name} finder</span>
                 </div>
               ))}
             </div>
