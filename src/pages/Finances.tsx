@@ -180,13 +180,14 @@ export default function Finances() {
   }), [leads, callerFees])
 
   const adminStats = useMemo(() => {
-    const adminIds = new Set(ADMINS.map(a => a.id))
+    const adminIds = new Set([...ADMINS.map(a => a.id), 'admin'])
     const adminWon = leads.filter(l => adminIds.has(l.callerId) && l.stage === 'won')
     const totalAdminRevenue = adminWon.reduce((s, l) => s + (l.dealValue ?? 0), 0)
     const eachFinderEarns = Math.round(totalAdminRevenue * 0.10) // 20% pool split equally = 10% each
+    const totalDeals = adminWon.length
     return ADMINS.map(admin => ({
       ...admin,
-      deals: adminWon.filter(l => l.callerId === admin.id).length,
+      deals: totalDeals,
       finderEarnings: eachFinderEarns,
     }))
   }, [leads])

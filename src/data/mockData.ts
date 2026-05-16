@@ -86,11 +86,14 @@ export const ADMINS: Admin[] = [
   { id: 'samvit', name: 'Samvit', email: 'samvittapuriah@gmail.com',   color: '#64748b', colorEnd: '#475569', feePercent: 30, finderBonus: 20, role: 'admin' },
 ]
 
-export const ADMIN_IDS: Set<string> = new Set(ADMINS.map(a => a.id))
+export const ADMIN_IDS: Set<string> = new Set([...ADMINS.map(a => a.id), 'admin'])
 
 // Backward-compat helpers — include admins so CALLER_COLORS['Luka'] works everywhere
 export const CALLER_COLORS: Record<string, string> = Object.fromEntries([...CALLERS, ...ADMINS].map(c => [c.name, c.color]))
-export const CALLER_COLOR_BY_ID: Record<string, string> = Object.fromEntries([...CALLERS, ...ADMINS].map(c => [c.id, c.color]))
+export const CALLER_COLOR_BY_ID: Record<string, string> = {
+  ...Object.fromEntries([...CALLERS, ...ADMINS].map(c => [c.id, c.color])),
+  admin: '#6366f1',
+}
 export const CALLER_EMAIL_MAP: Record<string, string> = Object.fromEntries([...CALLERS, ...ADMINS].map(c => [c.email, c.name]))
 export const CALLERS_LIST: string[] = CALLERS.map(c => c.name)
 

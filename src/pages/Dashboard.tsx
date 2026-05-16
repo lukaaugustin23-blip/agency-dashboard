@@ -56,6 +56,7 @@ function relativeDate(dateStr: string): string {
 }
 
 function getCallerName(callerId: string): string {
+  if (callerId === 'admin') return 'Luka & Samvit'
   return CALLERS.find(c => c.id === callerId)?.name
     ?? ADMINS.find(a => a.id === callerId)?.name
     ?? callerId

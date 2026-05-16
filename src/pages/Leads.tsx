@@ -35,12 +35,14 @@ const STAGE_LABELS: Record<Stage, string> = {
 }
 
 function getCallerName(callerId: string): string {
+  if (callerId === 'admin') return 'Luka & Samvit'
   return CALLERS.find(c => c.id === callerId)?.name
     ?? ADMINS.find(a => a.id === callerId)?.name
     ?? callerId
 }
 
 function getCallerColor(callerId: string): string {
+  if (callerId === 'admin') return '#6366f1'
   return CALLERS.find(c => c.id === callerId)?.color
     ?? ADMINS.find(a => a.id === callerId)?.color
     ?? '#94a3b8'
@@ -435,7 +437,7 @@ function AddLeadModal({ c, effectiveCaller, onClose, onAdd }: {
                   {CALLERS.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </optgroup>
                 <optgroup label="— ADMIN —">
-                  {ADMINS.map(a => <option key={a.id} value={a.id}>⚡ {a.name}</option>)}
+                  <option value="admin">⚡ Luka &amp; Samvit</option>
                 </optgroup>
               </select>
             </div>
