@@ -9,7 +9,7 @@ const ALLOWED_USERS: Record<string, UserRole> = {
   'hudsonmachuca25@gmail.com': 'caller',
   'juliandreyer67@gmail.com': 'caller',
   'meissadude@gmail.com': 'caller',
-  'jordanbtee@gmail.com': 'caller',
+  'ahe123488@gmail.com': 'caller',
 }
 
 export function getUserRole(email: string): UserRole | null {
