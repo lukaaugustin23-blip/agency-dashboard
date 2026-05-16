@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Arctic Clean — Light (default) */
+:root,
+[data-theme="light"] {
+  --c-bg: 255 255 255;
+  --c-bg-2: 248 250 252;
+  --c-bg-3: 241 245 249;
+  --c-border: 226 232 240;
+  --c-text: 15 23 42;
+  --c-text-second: 71 85 105;
+  --c-muted: 148 163 184;
+  --c-accent: 14 165 233;
+  --c-accent-2: 99 102 241;
+  --c-success: 16 185 129;
+  --c-warning: 245 158 11;
+  --c-danger: 239 68 68;
+}
+
+/* Obsidian Premium — Dark */
+[data-theme="dark"] {
+  --c-bg: 13 13 15;
+  --c-bg-2: 17 17 20;
+  --c-bg-3: 22 22 26;
+  --c-border: 30 30 38;
+  --c-text: 240 244 255;
+  --c-text-second: 136 146 164;
+  --c-muted: 69 77 94;
+  --c-accent: 59 130 246;
+  --c-accent-2: 6 182 212;
+  --c-success: 16 185 129;
+  --c-warning: 245 158 11;
+  --c-danger: 239 68 68;
+}
+
+*,
+*::before,
+*::after {
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* Exclude transitions on elements where it looks bad */
+button,
+a {
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease,
+    transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}

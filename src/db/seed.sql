@@ -1,0 +1,19 @@
+-- ============================================================
+-- Cooked Agency CRM — Seed Data
+-- ============================================================
+--
+-- No seed data is needed. INITIAL_LEADS and INITIAL_MEETINGS
+-- in src/data/mockData.ts are empty arrays — all data enters
+-- the database at runtime through the app UI.
+--
+-- To seed manually, insert rows using the patterns below:
+--
+-- INSERT INTO leads (id, business, type, contact, caller_id, stage)
+-- VALUES ('some-id', 'Business Name', 'Restaurant', 'John Doe', 'alex', 'new');
+--
+-- INSERT INTO meetings (id, business, date, start_time, duration_minutes, assignee, type)
+-- VALUES ('some-id', 'Business Name', '2026-05-20', '10:00', 60, 'Alex', 'Discovery Call');
+--
+-- INSERT INTO client_data (lead_id, services, notes, status, last_contact)
+-- VALUES ('some-lead-id', '{"website":true,"seo":false,"mcp":false,"socialMedia":false,"branding":false}', '', 'active', '2026-05-16');
+-- ============================================================
