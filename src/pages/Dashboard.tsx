@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { signOut } from '../lib/auth'
 import type { User } from '@supabase/supabase-js'
@@ -305,6 +305,7 @@ function LeaderboardRow({
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [theme, setTheme] = useState<Theme>(() => {
     return (localStorage.getItem('agency-theme') as Theme) ?? 'light'
   })
@@ -434,29 +435,32 @@ export default function Dashboard() {
           {/* Center: tabs */}
           <div style={{ display: 'flex', alignItems: 'stretch', gap: 0 }}>
             {[
-              { label: 'Dashboard',    path: '/admin',           active: true  },
-              { label: 'Sales Finance', path: '/dashboard/finances', active: false },
-              { label: 'Leads',        path: '/dashboard/leads',     active: false },
-              { label: 'Rejected',     path: '/dashboard/rejected',  active: false },
-              { label: 'Clients',      path: '/dashboard/clients',   active: false },
-              { label: 'Calendar',     path: '/dashboard/calendar',  active: false },
-              { label: 'Scripts',      path: '/dashboard/scripts',   active: false },
-            ].map(tab => (
-              <button
-                key={tab.path}
-                onClick={() => navigate(tab.path)}
-                style={{
-                  display: 'flex', alignItems: 'center', padding: '0 16px',
-                  fontSize: 13, fontWeight: tab.active ? 600 : 500,
-                  color: tab.active ? c.accent : c.muted,
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  borderBottom: tab.active ? `2px solid ${c.accent}` : '2px solid transparent',
-                  transition: 'color 0.15s ease, border-color 0.15s ease',
-                }}
-              >
-                {tab.label}
-              </button>
-            ))}
+              { label: 'Dashboard',     path: '/dashboard'           },
+              { label: 'Sales Finance', path: '/dashboard/finances'  },
+              { label: 'Leads',         path: '/dashboard/leads'     },
+              { label: 'Rejected',      path: '/dashboard/rejected'  },
+              { label: 'Clients',       path: '/dashboard/clients'   },
+              { label: 'Calendar',      path: '/dashboard/calendar'  },
+              { label: 'Scripts',       path: '/dashboard/scripts'   },
+            ].map(tab => {
+              const active = location.pathname === tab.path
+              return (
+                <button
+                  key={tab.path}
+                  onClick={() => navigate(tab.path)}
+                  style={{
+                    display: 'flex', alignItems: 'center', padding: '0 16px',
+                    fontSize: 13, fontWeight: active ? 600 : 500,
+                    color: active ? c.accent : c.muted,
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    borderBottom: active ? `2px solid ${c.accent}` : '2px solid transparent',
+                    transition: 'color 0.15s ease, border-color 0.15s ease',
+                  }}
+                >
+                  {tab.label}
+                </button>
+              )
+            })}
           </div>
 
           {/* Online presence */}
