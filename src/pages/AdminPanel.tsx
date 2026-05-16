@@ -48,6 +48,7 @@ function todayStr() {
 }
 
 function getCallerName(id: string) {
+  if (id === 'admin') return 'Luka & Samvit'
   return CALLERS.find(c => c.id === id)?.name ?? ADMINS.find(a => a.id === id)?.name ?? id
 }
 
@@ -282,9 +283,7 @@ function LogSaleSection({ c, defaultDealValue }: { c: C; defaultDealValue: strin
               ))}
             </optgroup>
             <optgroup label="— ADMIN —">
-              {ADMINS.map(admin => (
-                <option key={admin.id} value={admin.id}>{admin.name} — Admin</option>
-              ))}
+              <option value="admin">Luka &amp; Samvit — Admin</option>
             </optgroup>
           </select>
         </div>
@@ -650,7 +649,7 @@ function DealsSection({ c }: { c: C }) {
                         {CALLERS.map(caller => <option key={caller.id} value={caller.id}>{caller.name}</option>)}
                       </optgroup>
                       <optgroup label="— ADMIN —">
-                        {ADMINS.map(admin => <option key={admin.id} value={admin.id}>{admin.name}</option>)}
+                        <option value="admin">Luka &amp; Samvit</option>
                       </optgroup>
                     </select>
                   </td>
@@ -710,7 +709,7 @@ function DealsSection({ c }: { c: C }) {
                     {CALLERS.map(caller => <option key={caller.id} value={caller.id}>{caller.name} — Caller</option>)}
                   </optgroup>
                   <optgroup label="— ADMIN —">
-                    {ADMINS.map(admin => <option key={admin.id} value={admin.id}>{admin.name} — Admin</option>)}
+                    <option value="admin">Luka &amp; Samvit — Admin</option>
                   </optgroup>
                 </select>
               </div>
