@@ -727,12 +727,13 @@ export default function Leads() {
         { label: 'Scripts',       path: '/admin/scripts',      active: false },
       ]
     : [
-        { label: 'Overview',    path: '/dashboard',             active: false },
-        { label: 'My Leads',    path: '/dashboard/leads',       active: true  },
-        { label: 'Rejected',    path: '/dashboard/rejected',    active: false },
-        { label: 'Clients',     path: '/dashboard/clients',     active: false },
-        { label: 'Calendar',    path: '/dashboard/calendar',    active: false },
-        { label: 'Scripts',     path: '/dashboard/scripts',     active: false },
+        { label: 'Dashboard',     path: '/dashboard',              active: window.location.pathname === '/dashboard' },
+        { label: 'Sales Finance', path: '/dashboard/finances',     active: window.location.pathname === '/dashboard/finances' },
+        { label: 'Leads',         path: '/dashboard/leads',        active: window.location.pathname === '/dashboard/leads' },
+        { label: 'Rejected',      path: '/dashboard/rejected',     active: window.location.pathname === '/dashboard/rejected' },
+        { label: 'Clients',       path: '/dashboard/clients',      active: window.location.pathname === '/dashboard/clients' },
+        { label: 'Calendar',      path: '/dashboard/calendar',     active: window.location.pathname === '/dashboard/calendar' },
+        { label: 'Scripts',       path: '/dashboard/scripts',      active: window.location.pathname === '/dashboard/scripts' },
       ]
 
   return (

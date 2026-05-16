@@ -747,12 +747,13 @@ export default function Scripts() {
         { label: 'Scripts',       path: '/admin/scripts',   active: true,  badge: pendingCount },
       ]
     : [
-        { label: 'Overview',    path: '/dashboard',             active: false, badge: 0 },
-        { label: 'My Leads',    path: '/dashboard/leads',       active: false, badge: 0 },
-        { label: 'Rejected',    path: '/dashboard/rejected',    active: false, badge: 0 },
-        { label: 'Clients',     path: '/dashboard/clients',     active: false, badge: 0 },
-        { label: 'Calendar',    path: '/dashboard/calendar',    active: false, badge: 0 },
-        { label: 'Scripts',     path: '/dashboard/scripts',     active: true,  badge: 0 },
+        { label: 'Dashboard',     path: '/dashboard',              active: window.location.pathname === '/dashboard',          badge: 0 },
+        { label: 'Sales Finance', path: '/dashboard/finances',     active: window.location.pathname === '/dashboard/finances',  badge: 0 },
+        { label: 'Leads',         path: '/dashboard/leads',        active: window.location.pathname === '/dashboard/leads',     badge: 0 },
+        { label: 'Rejected',      path: '/dashboard/rejected',     active: window.location.pathname === '/dashboard/rejected',  badge: 0 },
+        { label: 'Clients',       path: '/dashboard/clients',      active: window.location.pathname === '/dashboard/clients',   badge: 0 },
+        { label: 'Calendar',      path: '/dashboard/calendar',     active: window.location.pathname === '/dashboard/calendar',  badge: 0 },
+        { label: 'Scripts',       path: '/dashboard/scripts',      active: window.location.pathname === '/dashboard/scripts',   badge: pendingCount },
       ]
 
   // Opener suggest button (for current opener, per caller)

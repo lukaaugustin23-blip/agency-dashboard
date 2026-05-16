@@ -157,7 +157,8 @@ export default function Finances() {
   const [user, setUser] = useState<User | null>(null)
   const [signOutHov, setSignOutHov] = useState(false)
   const { leads, callerFees } = useAppData()
-  const isAdmin = true
+  const isAdminPath = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')
+  const isAdmin = isAdminPath
 
   const c = THEMES[theme]
 
@@ -308,16 +309,24 @@ export default function Finances() {
             <span style={{ color: c.accent, fontSize: 13, fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase' }}>Agency</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'stretch', gap: 0 }}>
-            {[
-              { label: 'Dashboard',    path: '/admin',           active: false },
-              { label: 'Sales Finance', path: '/admin/finances', active: true  },
-              { label: 'Leads',        path: '/admin/leads',     active: false },
-              { label: 'Rejected',     path: '/admin/rejected',  active: false },
-              { label: 'Clients',      path: '/admin/clients',   active: false },
-              { label: 'Calendar',     path: '/admin/calendar',  active: false },
-              { label: 'Scripts',      path: '/admin/scripts',   active: false },
-              { label: 'Panel',        path: '/admin/panel',     active: false },
-            ].map(tab => (
+            {(isAdminPath ? [
+              { label: 'Dashboard',     path: '/admin',           active: false },
+              { label: 'Sales Finance', path: '/admin/finances',  active: true  },
+              { label: 'Leads',         path: '/admin/leads',     active: false },
+              { label: 'Rejected',      path: '/admin/rejected',  active: false },
+              { label: 'Clients',       path: '/admin/clients',   active: false },
+              { label: 'Calendar',      path: '/admin/calendar',  active: false },
+              { label: 'Scripts',       path: '/admin/scripts',   active: false },
+              { label: 'Panel',         path: '/admin/panel',     active: false },
+            ] : [
+              { label: 'Dashboard',     path: '/dashboard',              active: window.location.pathname === '/dashboard' },
+              { label: 'Sales Finance', path: '/dashboard/finances',     active: window.location.pathname === '/dashboard/finances' },
+              { label: 'Leads',         path: '/dashboard/leads',        active: window.location.pathname === '/dashboard/leads' },
+              { label: 'Rejected',      path: '/dashboard/rejected',     active: window.location.pathname === '/dashboard/rejected' },
+              { label: 'Clients',       path: '/dashboard/clients',      active: window.location.pathname === '/dashboard/clients' },
+              { label: 'Calendar',      path: '/dashboard/calendar',     active: window.location.pathname === '/dashboard/calendar' },
+              { label: 'Scripts',       path: '/dashboard/scripts',      active: window.location.pathname === '/dashboard/scripts' },
+            ]).map(tab => (
               <button
                 key={tab.path}
                 onClick={() => navigate(tab.path)}
