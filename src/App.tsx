@@ -108,6 +108,14 @@ function AppRoutes({ auth }: { auth: AuthState }) {
         }
       />
       <Route
+        path="/dashboard/finances"
+        element={
+          auth.status === 'authenticated'
+            ? <Finances />
+            : <Navigate to="/login" replace />
+        }
+      />
+      <Route
         path="/dashboard/leads"
         element={
           auth.status === 'authenticated'
