@@ -672,11 +672,14 @@ export default function Leads() {
   const previewCallerId = CALLERS.find(c => c.name === previewCaller)?.id ?? previewCaller
   const filterCallerId = filterCaller ? CALLERS.find(c => c.name === filterCaller)?.id ?? filterCaller : null
 
+  const ADMIN_CALLER_IDS = new Set(['luka', 'samvit', 'admin'])
   const viewFiltered = previewMode
     ? leads.filter(l => l.callerId === previewCallerId)
-    : (isAdmin && filterCallerId)
-      ? roleFiltered.filter(l => l.callerId === filterCallerId)
-      : roleFiltered
+    : (isAdmin && filterCaller === 'admin')
+      ? roleFiltered.filter(l => ADMIN_CALLER_IDS.has(l.callerId))
+      : (isAdmin && filterCallerId)
+        ? roleFiltered.filter(l => l.callerId === filterCallerId)
+        : roleFiltered
 
   const stats = {
     total: viewFiltered.length,
@@ -880,7 +883,11 @@ export default function Leads() {
               {/* Admin caller filter — hidden in preview mode */}
               {isAdmin && !previewMode && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  {[{ label: 'All', key: null }, ...CALLERS_LIST.map(n => ({ label: n, key: n })), ...ADMINS.map(a => ({ label: a.name, key: a.name }))].map(({ label, key }) => {
+                  {[
+                    { label: 'All', key: null, color: null },
+                    ...CALLERS_LIST.map(n => ({ label: n, key: n, color: CALLER_COLORS[n] })),
+                    { label: 'Luka & Samvit', key: 'admin', color: '#6366f1' },
+                  ].map(({ label, key, color }) => {
                     const active = key === filterCaller
                     return (
                       <button
@@ -897,10 +904,10 @@ export default function Leads() {
                           fontFamily: '"Plus Jakarta Sans", sans-serif',
                         }}
                       >
-                        {key && (
+                        {color && (
                           <div style={{
                             width: 7, height: 7, borderRadius: '50%',
-                            background: active ? 'rgba(255,255,255,0.8)' : CALLER_COLORS[key],
+                            background: active ? 'rgba(255,255,255,0.8)' : color,
                             flexShrink: 0,
                           }} />
                         )}
