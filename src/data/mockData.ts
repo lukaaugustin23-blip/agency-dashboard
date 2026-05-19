@@ -61,11 +61,11 @@ export interface ClientRecord {
 // ── Callers ───────────────────────────────────────────────────────────
 
 export const CALLERS: Caller[] = [
-  { id: 'alex',   name: 'Alex',   email: 'alexcychu18@gmail.com',     color: '#0ea5e9', colorEnd: '#0284c7', feePercent: 20 },
-  { id: 'hudson', name: 'Hudson', email: 'hudsonmachuca25@gmail.com', color: '#8b5cf6', colorEnd: '#6d28d9', feePercent: 20 },
-  { id: 'julian', name: 'Julian', email: 'juliandreyer67@gmail.com',  color: '#f59e0b', colorEnd: '#d97706', feePercent: 20 },
-  { id: 'aaron',  name: 'Aaron',  email: 'ahe123488@gmail.com',      color: '#10b981', colorEnd: '#059669', feePercent: 20 },
-  { id: 'meissa', name: 'Meissa', email: 'meissadude@gmail.com',      color: '#f43f5e', colorEnd: '#e11d48', feePercent: 20 },
+  { id: 'alex',   name: 'Alex',   email: 'alexcychu18@gmail.com',     color: '#0ea5e9', colorEnd: '#0284c7', feePercent: 25 },
+  { id: 'hudson', name: 'Hudson', email: 'hudsonmachuca25@gmail.com', color: '#8b5cf6', colorEnd: '#6d28d9', feePercent: 25 },
+  { id: 'julian', name: 'Julian', email: 'juliandreyer67@gmail.com',  color: '#f59e0b', colorEnd: '#d97706', feePercent: 25 },
+  { id: 'aaron',  name: 'Aaron',  email: 'ahe123488@gmail.com',      color: '#10b981', colorEnd: '#059669', feePercent: 25 },
+  { id: 'meissa', name: 'Meissa', email: 'meissadude@gmail.com',      color: '#f43f5e', colorEnd: '#e11d48', feePercent: 25 },
 ]
 
 // ── Admins ────────────────────────────────────────────────────────────
@@ -82,8 +82,8 @@ export interface Admin {
 }
 
 export const ADMINS: Admin[] = [
-  { id: 'luka',   name: 'Luka',   email: 'luka.augustin23@gmail.com', color: '#6366f1', colorEnd: '#4f46e5', feePercent: 50, finderBonus: 20, role: 'admin' },
-  { id: 'samvit', name: 'Samvit', email: 'samvittapuriah@gmail.com',   color: '#64748b', colorEnd: '#475569', feePercent: 30, finderBonus: 20, role: 'admin' },
+  { id: 'luka',   name: 'Luka',   email: 'luka.augustin23@gmail.com', color: '#6366f1', colorEnd: '#4f46e5', feePercent: 60, finderBonus: 20, role: 'admin' },
+  { id: 'samvit', name: 'Samvit', email: 'samvittapuriah@gmail.com',   color: '#64748b', colorEnd: '#475569', feePercent: 10, finderBonus: 20, role: 'admin' },
 ]
 
 export const ADMIN_IDS: Set<string> = new Set([...ADMINS.map(a => a.id), 'admin'])

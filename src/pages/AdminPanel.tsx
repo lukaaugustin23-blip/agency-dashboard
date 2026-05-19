@@ -732,13 +732,12 @@ function DealsSection({ c }: { c: C }) {
 // ── Section 4: Revenue Controls ────────────────────────────────────────
 
 function RevenueSection({ c, defaultDealValue, setDefaultDealValue }: { c: C; defaultDealValue: string; setDefaultDealValue: (v: string) => void }) {
-  const { callerFees, setCallerFees } = useAppData()
   const [localDefault, setLocalDefault] = useState(defaultDealValue)
 
-  const lukaFee = callerFees['luka'] ?? 50
-  const samvitFee = callerFees['samvit'] ?? 30
-  const finderFee = Math.max(0, 100 - lukaFee - samvitFee)
-  const total = lukaFee + samvitFee + finderFee
+  const callerPct = 25
+  const lukaPct = 60
+  const samvitPct = 10
+  const poolPct = 5
 
   return (
     <div style={cardStyle(c)}>
@@ -747,52 +746,26 @@ function RevenueSection({ c, defaultDealValue, setDefaultDealValue }: { c: C; de
 
       {/* Split bar */}
       <div style={{ height: 48, borderRadius: 12, overflow: 'hidden', display: 'flex', marginBottom: 12 }}>
-        {lukaFee > 0 && (
-          <div style={{ width: `${lukaFee}%`, background: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ color: '#fff', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>Luka {lukaFee}%</span>
-          </div>
-        )}
-        {samvitFee > 0 && (
-          <div style={{ width: `${samvitFee}%`, background: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ color: '#fff', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>Samvit {samvitFee}%</span>
-          </div>
-        )}
-        {finderFee > 0 && (
-          <div style={{ width: `${finderFee}%`, background: c.accent, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ color: '#fff', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>Finder {finderFee}%</span>
-          </div>
-        )}
-      </div>
-
-      {total !== 100 && (
-        <p style={{ fontSize: 12, color: c.danger, fontWeight: 600, marginBottom: 12 }}>
-          Must total 100% (currently {lukaFee + samvitFee + finderFee}%)
-        </p>
-      )}
-
-      {/* Admin fee inputs */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
-        {ADMINS.map(admin => (
-          <div key={admin.id} style={{ flex: 1 }}>
-            <label style={{ fontSize: 11, fontWeight: 700, color: c.muted, textTransform: 'uppercase' as const, letterSpacing: '0.08em', display: 'block', marginBottom: 6 }}>
-              {admin.name} Fee %
-            </label>
-            <input
-              type="number"
-              value={callerFees[admin.id] ?? admin.feePercent}
-              onChange={e => setCallerFees(prev => ({ ...prev, [admin.id]: Number(e.target.value) }))}
-              style={{ ...inputStyle(c), width: '100%', fontWeight: 700, color: '#6366f1' }}
-            />
-          </div>
-        ))}
+        <div style={{ width: `${lukaPct}%`, background: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ color: '#fff', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>Luka {lukaPct}%</span>
+        </div>
+        <div style={{ width: `${callerPct}%`, background: '#0ea5e9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ color: '#fff', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>Caller {callerPct}%</span>
+        </div>
+        <div style={{ width: `${samvitPct}%`, background: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ color: '#fff', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>Samvit {samvitPct}%</span>
+        </div>
+        <div style={{ width: `${poolPct}%`, background: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ color: '#fff', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>Pool {poolPct}%</span>
+        </div>
       </div>
 
       {/* Scenario cards */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
         {[
-          { label: 'Caller finds', values: `Caller ${finderFee}% · Luka ${lukaFee}% · Samvit ${samvitFee}%` },
-          { label: 'Luka finds', values: `Luka ${lukaFee + finderFee}% · Samvit ${samvitFee}% · Caller 0%` },
-          { label: 'Samvit finds', values: `Luka ${lukaFee}% · Samvit ${samvitFee + finderFee}% · Caller 0%` },
+          { label: 'Caller finds', values: `Caller ${callerPct}% · Luka ${lukaPct}% · Samvit ${samvitPct}% · Pool ${poolPct}%` },
+          { label: 'Luka finds', values: `Luka ${lukaPct + callerPct}% · Samvit ${samvitPct}% · Pool ${poolPct}% · Caller 0%` },
+          { label: 'Samvit finds', values: `Luka ${lukaPct}% · Samvit ${samvitPct + callerPct}% · Pool ${poolPct}% · Caller 0%` },
         ].map(scenario => (
           <div key={scenario.label} style={{ flex: 1, background: c.bg3, borderRadius: 10, padding: 12 }}>
             <p style={{ margin: '0 0 4px', fontSize: 10, fontWeight: 700, color: c.muted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{scenario.label}</p>

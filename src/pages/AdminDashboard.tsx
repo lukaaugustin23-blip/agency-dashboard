@@ -330,15 +330,35 @@ export default function AdminDashboard() {
     const totalRevenue = wonLeads.reduce((s, l) => s + (l.dealValue ?? 0), 0)
     const avgDeal = wonLeads.length > 0 ? Math.round(totalRevenue / wonLeads.length) : 0
 
-    return { revenueMTD, activeClients: wonLeads.length, dealsThisWeek, avgDeal }
+    const investmentPool = Math.round(wonLeads.reduce((s, l) => s + (l.dealValue ?? 0), 0) * 0.025)
+    return { revenueMTD, investmentPool, dealsThisWeek, avgDeal }
   }, [leads])
 
   const leaderboard: LeaderEntry[] = useMemo(() => {
-    return CALLERS.map(caller => {
-      const callerWon = leads.filter(l => l.callerId === caller.id && l.stage === 'won')
-      const revenue = callerWon.reduce((s, l) => s + (l.dealValue ?? 0), 0)
-      return { name: caller.name, email: caller.email, sales: callerWon.length, revenue, color: caller.color }
-    }).sort((a, b) => b.revenue - a.revenue || a.name.localeCompare(b.name))
+    // Current week: Monday 00:00 to Sunday 23:59
+    const now = new Date()
+    const dayOfWeek = now.getDay() // 0=Sun, 1=Mon...
+    const daysFromMon = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+    const weekStart = new Date(now)
+    weekStart.setDate(now.getDate() - daysFromMon)
+    weekStart.setHours(0, 0, 0, 0)
+    const weekEnd = new Date(weekStart)
+    weekEnd.setDate(weekStart.getDate() + 6)
+    weekEnd.setHours(23, 59, 59, 999)
+
+    const entries = CALLERS.map(caller => {
+      const weekWon = leads.filter(l =>
+        l.callerId === caller.id &&
+        l.stage === 'won' &&
+        l.closedDate &&
+        new Date(l.closedDate + 'T12:00:00') >= weekStart &&
+        new Date(l.closedDate + 'T12:00:00') <= weekEnd
+      )
+      const revenue = weekWon.reduce((s, l) => s + (l.dealValue ?? 0), 0)
+      return { name: caller.name, email: caller.email, sales: weekWon.length, revenue, color: caller.color }
+    }).sort((a, b) => b.sales - a.sales || b.revenue - a.revenue || a.name.localeCompare(b.name))
+
+    return entries
   }, [leads])
 
   const followupsFromLeads = useMemo<FollowUpItem[]>(() => {
@@ -527,10 +547,10 @@ export default function AdminDashboard() {
 
             {/* Stat cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-              <StatCard label="Revenue MTD"    value={`$${stats.revenueMTD.toLocaleString()}`} sub="month to date"          accent c={c} delay="0.05s" />
-              <StatCard label="Active Clients" value={String(stats.activeClients)}           sub="total won"              c={c} delay="0.10s" />
-              <StatCard label="Deals Closed"   value={String(stats.dealsThisWeek)}           sub="this week"              c={c} delay="0.15s" />
-              <StatCard label="Avg Deal Size"  value={`$${stats.avgDeal.toLocaleString()}`}  sub="per deal"               c={c} delay="0.20s" />
+              <StatCard label="Revenue MTD"    value={`$${stats.revenueMTD.toLocaleString()}`}    sub="month to date" accent c={c} delay="0.05s" />
+              <StatCard label="Investment Pool" value={`$${stats.investmentPool.toLocaleString()}`} sub="2.5% of all closed"   c={c} delay="0.10s" />
+              <StatCard label="Deals Closed"   value={String(stats.dealsThisWeek)}                sub="this week"             c={c} delay="0.15s" />
+              <StatCard label="Avg Deal Size"  value={`$${stats.avgDeal.toLocaleString()}`}       sub="per deal"              c={c} delay="0.20s" />
             </div>
 
             {/* Leaderboard */}
@@ -545,21 +565,27 @@ export default function AdminDashboard() {
               transition: 'background 0.3s ease, border-color 0.3s ease',
             }}>
               <p style={{ margin: 0, color: c.muted, fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                Leaderboard
+                Leaderboard — This Week
               </p>
               <h2 style={{ margin: '4px 0 16px', fontSize: 22, fontWeight: 800, color: c.text, letterSpacing: '-0.02em' }}>
-                Sales Rankings
+                Sales Rankings — This Week
               </h2>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {leaderboard.map((caller, i) => (
-                  <LeaderboardRow
-                    key={caller.email}
-                    caller={caller}
-                    rank={i + 1}
-                    c={c}
-                    delay={`${0.30 + i * 0.05}s`}
-                  />
+                  <div key={caller.email}>
+                    <LeaderboardRow
+                      caller={caller}
+                      rank={i + 1}
+                      c={c}
+                      delay={`${0.30 + i * 0.05}s`}
+                    />
+                    {i === 0 && caller.sales > 0 && (
+                      <div style={{ paddingLeft: 60, marginTop: -4, marginBottom: 4 }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: '#10b981', background: '#10b98118', borderRadius: 4, padding: '2px 6px' }}>+2.5% bonus</span>
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
               {/* Admin-sourced deals note */}
