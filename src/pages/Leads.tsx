@@ -180,15 +180,20 @@ function LeadCard({ lead, c, delay, onClick }: {
 
 // ── Lead Detail Modal ─────────────────────────────────────────────────
 
-function LeadDetailModal({ lead, c, canDelete, onClose, onMoveStage, onUpdateNotes, onDelete }: {
+function LeadDetailModal({ lead, c, canDelete, onClose, onMoveStage, onUpdateNotes, onDelete, onTransfer }: {
   lead: Lead; c: C; canDelete: boolean
   onClose: () => void
   onMoveStage: (id: string, stage: Stage) => void
   onUpdateNotes: (id: string, notes: string) => void
   onDelete: (id: string) => void
+  onTransfer: (id: string, newCallerId: string) => void
 }) {
   const [localNotes, setLocalNotes] = useState(lead.notes ?? '')
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [showTransfer, setShowTransfer] = useState(false)
+  const allMembers = [...CALLERS, ...ADMINS]
+  const transferOptions = allMembers.filter(m => m.id !== lead.callerId && m.id !== 'admin')
+  const [transferTo, setTransferTo] = useState(transferOptions[0]?.id ?? '')
   const callerColor = getCallerColor(lead.callerId)
   const callerDisplayName = getCallerName(lead.callerId)
 
@@ -307,44 +312,101 @@ function LeadDetailModal({ lead, c, canDelete, onClose, onMoveStage, onUpdateNot
           />
         </div>
 
-        {/* Delete — admins only */}
+        {/* Actions row — admins only */}
         {canDelete && (
-          !confirmDelete ? (
-            <button
-              onClick={() => setConfirmDelete(true)}
-              style={{
-                fontSize: 12, fontWeight: 600, color: c.danger,
-                background: 'transparent', border: `1px solid ${c.danger}40`,
-                padding: '7px 14px', borderRadius: 8, cursor: 'pointer',
-                fontFamily: '"Plus Jakarta Sans", sans-serif',
-                transition: 'background 0.15s ease',
-              }}
-            >
-              Delete Lead
-            </button>
-          ) : (
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <span style={{ fontSize: 12, color: c.textSecond }}>Are you sure?</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+
+            {/* Transfer Lead */}
+            {!showTransfer ? (
               <button
-                onClick={() => { onDelete(lead.id); onClose() }}
+                onClick={() => { setShowTransfer(true); setConfirmDelete(false) }}
                 style={{
-                  fontSize: 12, fontWeight: 600, color: '#fff',
-                  background: c.danger, border: 'none',
+                  fontSize: 12, fontWeight: 600, color: c.accent,
+                  background: 'transparent', border: `1px solid ${c.accent}40`,
                   padding: '7px 14px', borderRadius: 8, cursor: 'pointer',
                   fontFamily: '"Plus Jakarta Sans", sans-serif',
+                  transition: 'background 0.15s ease',
+                  alignSelf: 'flex-start',
                 }}
-              >Confirm</button>
+              >
+                Transfer Lead
+              </button>
+            ) : (
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <select
+                  value={transferTo}
+                  onChange={e => setTransferTo(e.target.value)}
+                  style={{
+                    padding: '7px 10px', fontSize: 12, borderRadius: 8,
+                    border: `1px solid ${c.border}`, background: c.bg2,
+                    color: c.text, fontFamily: '"Plus Jakarta Sans", sans-serif',
+                    cursor: 'pointer', outline: 'none',
+                  }}
+                >
+                  {transferOptions.map(m => (
+                    <option key={m.id} value={m.id}>{m.name}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => { onTransfer(lead.id, transferTo); onClose() }}
+                  style={{
+                    fontSize: 12, fontWeight: 600, color: '#fff',
+                    background: c.accent, border: 'none',
+                    padding: '7px 14px', borderRadius: 8, cursor: 'pointer',
+                    fontFamily: '"Plus Jakarta Sans", sans-serif',
+                  }}
+                >Transfer</button>
+                <button
+                  onClick={() => setShowTransfer(false)}
+                  style={{
+                    fontSize: 12, fontWeight: 600, color: c.textSecond,
+                    background: 'transparent', border: `1px solid ${c.border}`,
+                    padding: '7px 14px', borderRadius: 8, cursor: 'pointer',
+                    fontFamily: '"Plus Jakarta Sans", sans-serif',
+                  }}
+                >Cancel</button>
+              </div>
+            )}
+
+            {/* Delete Lead */}
+            {!confirmDelete ? (
               <button
-                onClick={() => setConfirmDelete(false)}
+                onClick={() => { setConfirmDelete(true); setShowTransfer(false) }}
                 style={{
-                  fontSize: 12, fontWeight: 600, color: c.textSecond,
-                  background: 'transparent', border: `1px solid ${c.border}`,
+                  fontSize: 12, fontWeight: 600, color: c.danger,
+                  background: 'transparent', border: `1px solid ${c.danger}40`,
                   padding: '7px 14px', borderRadius: 8, cursor: 'pointer',
                   fontFamily: '"Plus Jakarta Sans", sans-serif',
+                  transition: 'background 0.15s ease',
+                  alignSelf: 'flex-start',
                 }}
-              >Cancel</button>
-            </div>
-          )
+              >
+                Delete Lead
+              </button>
+            ) : (
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <span style={{ fontSize: 12, color: c.textSecond }}>Are you sure?</span>
+                <button
+                  onClick={() => { onDelete(lead.id); onClose() }}
+                  style={{
+                    fontSize: 12, fontWeight: 600, color: '#fff',
+                    background: c.danger, border: 'none',
+                    padding: '7px 14px', borderRadius: 8, cursor: 'pointer',
+                    fontFamily: '"Plus Jakarta Sans", sans-serif',
+                  }}
+                >Confirm</button>
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  style={{
+                    fontSize: 12, fontWeight: 600, color: c.textSecond,
+                    background: 'transparent', border: `1px solid ${c.border}`,
+                    padding: '7px 14px', borderRadius: 8, cursor: 'pointer',
+                    fontFamily: '"Plus Jakarta Sans", sans-serif',
+                  }}
+                >Cancel</button>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>
@@ -714,6 +776,24 @@ export default function Leads() {
     deleteLead(id)
   }
 
+  function handleTransferLead(id: string, newCallerId: string) {
+    const lead = leads.find(l => l.id === id)
+    if (!lead) return
+    const oldName = getCallerName(lead.callerId)
+    const newName = getCallerName(newCallerId)
+    updateLead(id, { callerId: newCallerId })
+    // Log to activity_log
+    void supabase.from('activity_log').insert({
+      action: 'transfer',
+      entity_type: 'lead',
+      entity_id: id,
+      caller_id: newCallerId,
+      meta: { from: lead.callerId, to: newCallerId, business: lead.business, message: `Lead transferred from ${oldName} to ${newName}` },
+    }).then(({ error }) => {
+      if (error) console.error('activity_log transfer error:', error)
+    })
+  }
+
   function handleQuickAdd(business: string, callerDisplayName: string, stage: Stage) {
     const cid = CALLERS.find(c => c.name === callerDisplayName)?.id ?? 'alex'
     setLeads(prev => [...prev, { id: Date.now().toString(), business, type: '', contact: '', callerId: cid, addedDate: new Date().toISOString().split('T')[0], stage }])
@@ -986,6 +1066,7 @@ export default function Leads() {
           onMoveStage={handleMoveStage}
           onUpdateNotes={handleUpdateNotes}
           onDelete={handleDeleteLead}
+          onTransfer={handleTransferLead}
         />
       )}
 
