@@ -62,29 +62,35 @@ interface Stat {
   sourceUrl?: string
 }
 
-const INITIAL_STATS: Stat[] = [
-  { id: 1, number: '97%',  description: 'of consumers search online for local businesses', sourceName: 'BIA/Kelsey Research', sourceUrl: 'https://www.searchenginejournal.com/local-seo-statistics/' },
-  { id: 2, number: '70%',  description: "of small businesses don't have a website", sourceName: 'Top Design Firms 2024', sourceUrl: 'https://topdesignfirms.com/web-design/blog/small-business-website-statistics' },
-  { id: 3, number: '75%',  description: "of users judge a company's credibility by their website", sourceName: 'Stanford Web Credibility Research', sourceUrl: 'https://credibility.stanford.edu/' },
-  { id: 4, number: '46%',  description: 'of all Google searches are looking for local info', sourceName: 'GoGulf', sourceUrl: 'https://www.searchenginejournal.com/local-seo-statistics/' },
-  { id: 5, number: '88%',  description: 'of consumers who search locally visit or call within 24 hours', sourceName: 'Nectafy', sourceUrl: 'https://www.searchenginejournal.com/local-seo-statistics/' },
-  { id: 6, number: '$0',   description: "is what it costs them in lost revenue to NOT have a website — that's the real price", sourceName: 'Common sense' },
-]
+// IDs are in non-overlapping ranges so they coexist in the same `scripts` table:
+//   Openers:    1001–1999
+//   Objections: 2001–2999
+//   Stats:      3001–3999
+//   User-created items use Date.now() (> 1_700_000_000_000) — no conflict
 
 const INITIAL_OPENERS: Opener[] = [
-  { id: 1, title: 'The Direct Approach',   script: "Hi [Name], I'm [Your Name] calling from Agency. I was looking at [Business Name] online and noticed you don't have a website yet. These days that's leaving money on the table — do you have 30 seconds for me to explain what I mean?" },
-  { id: 2, title: 'The Compliment Opener', script: "Hey [Name], I was actually checking out [Business Name] and I love what you guys are doing. I noticed you don't have a website though, and I think you're missing out on a ton of customers who are searching online. Can I ask you a quick question?" },
-  { id: 3, title: 'The Referral Style',    script: "Hi [Name], I just helped a [similar business type] in your area get set up online and they've been getting new customers from it every week. I noticed [Business Name] doesn't have a web presence yet — would you be open to hearing what we did for them?" },
-  { id: 4, title: 'The Problem Solver',    script: "Hey [Name], quick question — when people in [area] search Google for [their service], are they finding you right now? No? That's actually why I'm calling..." },
+  { id: 1001, title: 'The Direct Approach',   script: "Hi [Name], I'm [Your Name] calling from Agency. I was looking at [Business Name] online and noticed you don't have a website yet. These days that's leaving money on the table — do you have 30 seconds for me to explain what I mean?" },
+  { id: 1002, title: 'The Compliment Opener', script: "Hey [Name], I was actually checking out [Business Name] and I love what you guys are doing. I noticed you don't have a website though, and I think you're missing out on a ton of customers who are searching online. Can I ask you a quick question?" },
+  { id: 1003, title: 'The Referral Style',    script: "Hi [Name], I just helped a [similar business type] in your area get set up online and they've been getting new customers from it every week. I noticed [Business Name] doesn't have a web presence yet — would you be open to hearing what we did for them?" },
+  { id: 1004, title: 'The Problem Solver',    script: "Hey [Name], quick question — when people in [area] search Google for [their service], are they finding you right now? No? That's actually why I'm calling..." },
 ]
 
 const INITIAL_OBJECTIONS: Objection[] = [
-  { id: 1, objection: '"$1,000 is too much"',                       response: "I totally understand — and honestly, most of our clients felt the same way at first. But think about it this way: if your website brings in just 2-3 new customers a month, you've already made that back. One of our clients, a local bakery, made their investment back in the first 3 weeks. It's not an expense, it's the cheapest employee you'll ever hire — works 24/7 and never calls in sick." },
-  { id: 2, objection: '"I don\'t need a website"',                   response: "I hear you, and a lot of business owners feel that way because they've been doing fine without one. But here's the thing — your competitors have websites, and when someone searches for [their service] in [their area], those competitors are getting the calls. You're invisible to anyone under 40 who searches online first. We're not trying to change how you do business, just making sure people can actually find you." },
-  { id: 3, objection: '"I need to think about it"',                  response: "Absolutely, I wouldn't want you to rush into anything. What specifically would you want to think over — is it the price, the timing, or just the idea in general? [Wait for answer]. That makes sense. How about this — I can send you a quick mockup of what your site would look like, totally free, no commitment. That way you have something real to think about instead of just an idea." },
-  { id: 4, objection: '"I already have someone for my website"',     response: "Oh nice, that's great you're already thinking about it. Just out of curiosity — are you happy with how it's going? Because we hear from a lot of businesses that hired someone and it's been months with no progress. If you're all set, I totally respect that. But if you're not 100% satisfied, it might be worth a quick 15-minute chat to see what we'd do differently." },
-  { id: 5, objection: '"Can you call back later?"',                  response: "Of course — when's a good time for you? I'll put it in my calendar right now. [Book the callback]. Actually, just so you know what this is about when I call back — we build websites for local businesses like yours and we've helped [X similar businesses] in [area] start getting found online. I'll keep it super quick, just 5 minutes." },
-  { id: 6, objection: '"I\'m too busy right now"',                   response: "I completely respect that — running a business is no joke. That's actually exactly why this works so well though. We handle everything — you don't have to do anything except one 30-minute call to tell us about your business. After that, we build it, you approve it, done. Can I grab just 2 minutes to explain how easy we make it?" },
+  { id: 2001, objection: '"$1,000 is too much"',                       response: "I totally understand — and honestly, most of our clients felt the same way at first. But think about it this way: if your website brings in just 2-3 new customers a month, you've already made that back. One of our clients, a local bakery, made their investment back in the first 3 weeks. It's not an expense, it's the cheapest employee you'll ever hire — works 24/7 and never calls in sick." },
+  { id: 2002, objection: '"I don\'t need a website"',                   response: "I hear you, and a lot of business owners feel that way because they've been doing fine without one. But here's the thing — your competitors have websites, and when someone searches for [their service] in [their area], those competitors are getting the calls. You're invisible to anyone under 40 who searches online first. We're not trying to change how you do business, just making sure people can actually find you." },
+  { id: 2003, objection: '"I need to think about it"',                  response: "Absolutely, I wouldn't want you to rush into anything. What specifically would you want to think over — is it the price, the timing, or just the idea in general? [Wait for answer]. That makes sense. How about this — I can send you a quick mockup of what your site would look like, totally free, no commitment. That way you have something real to think about instead of just an idea." },
+  { id: 2004, objection: '"I already have someone for my website"',     response: "Oh nice, that's great you're already thinking about it. Just out of curiosity — are you happy with how it's going? Because we hear from a lot of businesses that hired someone and it's been months with no progress. If you're all set, I totally respect that. But if you're not 100% satisfied, it might be worth a quick 15-minute chat to see what we'd do differently." },
+  { id: 2005, objection: '"Can you call back later?"',                  response: "Of course — when's a good time for you? I'll put it in my calendar right now. [Book the callback]. Actually, just so you know what this is about when I call back — we build websites for local businesses like yours and we've helped [X similar businesses] in [area] start getting found online. I'll keep it super quick, just 5 minutes." },
+  { id: 2006, objection: '"I\'m too busy right now"',                   response: "I completely respect that — running a business is no joke. That's actually exactly why this works so well though. We handle everything — you don't have to do anything except one 30-minute call to tell us about your business. After that, we build it, you approve it, done. Can I grab just 2 minutes to explain how easy we make it?" },
+]
+
+const INITIAL_STATS: Stat[] = [
+  { id: 3001, number: '97%',  description: 'of consumers search online for local businesses', sourceName: 'BIA/Kelsey Research', sourceUrl: 'https://www.searchenginejournal.com/local-seo-statistics/' },
+  { id: 3002, number: '70%',  description: "of small businesses don't have a website", sourceName: 'Top Design Firms 2024', sourceUrl: 'https://topdesignfirms.com/web-design/blog/small-business-website-statistics' },
+  { id: 3003, number: '75%',  description: "of users judge a company's credibility by their website", sourceName: 'Stanford Web Credibility Research', sourceUrl: 'https://credibility.stanford.edu/' },
+  { id: 3004, number: '46%',  description: 'of all Google searches are looking for local info', sourceName: 'GoGulf', sourceUrl: 'https://www.searchenginejournal.com/local-seo-statistics/' },
+  { id: 3005, number: '88%',  description: 'of consumers who search locally visit or call within 24 hours', sourceName: 'Nectafy', sourceUrl: 'https://www.searchenginejournal.com/local-seo-statistics/' },
+  { id: 3006, number: '$0',   description: "is what it costs them in lost revenue to NOT have a website — that's the real price", sourceName: 'Common sense' },
 ]
 
 
@@ -616,35 +622,51 @@ export default function Scripts() {
 
   async function loadData() {
     try {
-      const [{ data: scriptRows, error: scriptErr }, { data: sugRows }] = await Promise.all([
+      console.log('[Scripts] loadData start')
+      const [{ data: scriptRows, error: scriptErr }, { data: sugRows, error: sugErr }] = await Promise.all([
         supabase.from('scripts').select('*').order('sort_order'),
         supabase.from('suggestions').select('*').order('created_at'),
       ])
 
       if (scriptErr) {
-        // Table doesn't exist yet — page already shows INITIAL_* defaults, nothing to do
-        console.warn('Scripts table not found (run schema.sql in Supabase):', scriptErr.message)
-      } else if (scriptRows && scriptRows.length > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const rows = scriptRows as any[]
-        const dbOpeners = rows.filter(r => r.category === 'opener').map(r => ({ id: Number(r.id), ...r.data } as Opener))
-        const dbObjections = rows.filter(r => r.category === 'objection').map(r => ({ id: Number(r.id), ...r.data } as Objection))
-        const dbStats = rows.filter(r => r.category === 'stat').map(r => ({ id: Number(r.id), ...r.data } as Stat))
-        if (dbOpeners.length > 0) setOpeners(dbOpeners)
-        if (dbObjections.length > 0) setObjections(dbObjections)
-        if (dbStats.length > 0) setStats(dbStats)
-      } else {
-        // Table exists but empty — seed with hardcoded defaults
-        const seedRows = [
-          ...INITIAL_OPENERS.map((o, i) => ({ id: o.id, category: 'opener', data: { title: o.title, script: o.script }, sort_order: i })),
-          ...INITIAL_OBJECTIONS.map((o, i) => ({ id: o.id, category: 'objection', data: { objection: o.objection, response: o.response }, sort_order: i })),
-          ...INITIAL_STATS.map((s, i) => ({ id: s.id, category: 'stat', data: { number: s.number, description: s.description, sourceName: s.sourceName, sourceUrl: s.sourceUrl }, sort_order: i })),
-        ]
-        await supabase.from('scripts').upsert(seedRows)
-        // State already shows INITIAL_* — no setters needed
+        console.error('[Scripts] fetch error — table may not exist yet. Run schema.sql in Supabase.', scriptErr)
+        // State already shows INITIAL_* — usable without DB
+        return
       }
 
-      if (sugRows && sugRows.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rows = (scriptRows ?? []) as any[]
+      const dbOpeners    = rows.filter(r => r.category === 'opener')    .map(r => ({ id: Number(r.id), ...r.data } as Opener))
+      const dbObjections = rows.filter(r => r.category === 'objection') .map(r => ({ id: Number(r.id), ...r.data } as Objection))
+      const dbStats      = rows.filter(r => r.category === 'stat')      .map(r => ({ id: Number(r.id), ...r.data } as Stat))
+
+      console.log(`[Scripts] DB rows: ${rows.length} total — ${dbOpeners.length} openers, ${dbObjections.length} objections, ${dbStats.length} stats`)
+
+      if (rows.length === 0 || dbOpeners.length === 0) {
+        // Empty table OR bad seed (old IDs 1-6 caused overwrites) — wipe and re-seed
+        if (rows.length > 0) {
+          console.log('[Scripts] Bad seed detected (no opener rows). Clearing and re-seeding.')
+          await supabase.from('scripts').delete().neq('id', 0)
+        }
+        const seedRows = [
+          ...INITIAL_OPENERS.map((o, i)    => ({ id: o.id, category: 'opener',    data: { title: o.title, script: o.script },                                                                            sort_order: i })),
+          ...INITIAL_OBJECTIONS.map((o, i) => ({ id: o.id, category: 'objection', data: { objection: o.objection, response: o.response },                                                               sort_order: i })),
+          ...INITIAL_STATS.map((s, i)      => ({ id: s.id, category: 'stat',      data: { number: s.number, description: s.description, sourceName: s.sourceName, sourceUrl: s.sourceUrl ?? null },     sort_order: i })),
+        ]
+        const { error: seedErr } = await supabase.from('scripts').upsert(seedRows)
+        if (seedErr) console.error('[Scripts] seed error:', seedErr)
+        else console.log('[Scripts] seeded', seedRows.length, 'default rows')
+        // State already shows INITIAL_* — no further setters needed
+      } else {
+        // DB is authoritative — replace local state entirely
+        setOpeners(dbOpeners)
+        setObjections(dbObjections)
+        setStats(dbStats)
+      }
+
+      if (sugErr) {
+        console.error('[Scripts] suggestions fetch error:', sugErr)
+      } else if (sugRows && sugRows.length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setSuggestions((sugRows as any[]).map(r => ({
           id: Number(r.id),
@@ -661,10 +683,13 @@ export default function Scripts() {
         })))
       }
     } catch (err) {
-      console.error('Scripts: loadData error — showing defaults', err)
-      // State already initialized from INITIAL_* — page is usable
+      console.error('[Scripts] loadData threw unexpectedly:', err)
     }
   }
+
+  // Load from DB immediately on mount — don't wait for auth check
+  // (Supabase client already has the session; App.tsx guarantees auth before rendering)
+  useEffect(() => { loadData() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -675,7 +700,6 @@ export default function Scripts() {
         setRole(r)
         if (r === 'caller') setCallerName(CALLER_EMAIL_MAP[u.email] ?? null)
       }
-      if (u) loadData()
     })
   }, [])
 
@@ -710,6 +734,7 @@ export default function Scripts() {
     setOpeners(prev => prev.map(o => o.id === id ? updated : o))
     setEditingOpenerId(null)
     supabase.from('scripts').upsert({ id, category: 'opener', data: { title: updated.title, script: updated.script } })
+      .then(({ error }) => { if (error) console.error('[Scripts] saveOpener upsert failed:', error) })
   }
 
   function startEditObj(obj: Objection) {
@@ -723,12 +748,14 @@ export default function Scripts() {
     setObjections(prev => prev.map(o => o.id === id ? updated : o))
     setEditingObjId(null)
     supabase.from('scripts').upsert({ id, category: 'objection', data: { objection: updated.objection, response: updated.response } })
+      .then(({ error }) => { if (error) console.error('[Scripts] saveObj upsert failed:', error) })
   }
   function deleteObj(id: number) {
     setObjections(prev => prev.filter(o => o.id !== id))
     if (openObjId === id) setOpenObjId(null)
     if (editingObjId === id) setEditingObjId(null)
     supabase.from('scripts').delete().eq('id', id)
+      .then(({ error }) => { if (error) console.error('[Scripts] deleteObj failed:', error) })
   }
 
   function toggleObj(id: number) {
@@ -766,7 +793,7 @@ export default function Scripts() {
       stat_url: newSug.statUrl ?? null,
       status: 'pending',
       timestamp: 'just now',
-    })
+    }).then(({ error }) => { if (error) console.error('[Scripts] suggestion insert failed:', error) })
   }
 
   function approveSuggestion(id: number) {
@@ -811,13 +838,16 @@ export default function Scripts() {
     setSuggestions(prev => prev.map(s => s.id === id ? { ...s, status: 'approved' } : s))
     setToastMsg('Suggestion approved and applied!')
     if (scriptRow) supabase.from('scripts').upsert(scriptRow)
+      .then(({ error }) => { if (error) console.error('[Scripts] approveSuggestion script upsert failed:', error) })
     supabase.from('suggestions').update({ status: 'approved' }).eq('id', id)
+      .then(({ error }) => { if (error) console.error('[Scripts] approveSuggestion status update failed:', error) })
   }
 
   function rejectSuggestion(id: number) {
     setSuggestions(prev => prev.map(s => s.id === id ? { ...s, status: 'rejected' } : s))
     setToastMsg('Suggestion rejected.')
     supabase.from('suggestions').update({ status: 'rejected' }).eq('id', id)
+      .then(({ error }) => { if (error) console.error('[Scripts] rejectSuggestion failed:', error) })
   }
 
   // Build grid items with inline expansion
@@ -1125,13 +1155,15 @@ export default function Scripts() {
                           const updated = { ...stat, ...statDraft }
                           setStats(prev => prev.map(s => s.id === stat.id ? updated : s))
                           setEditingStatId(null)
-                          supabase.from('scripts').upsert({ id: stat.id, category: 'stat', data: { number: updated.number, description: updated.description, sourceName: updated.sourceName, sourceUrl: updated.sourceUrl } })
+                          supabase.from('scripts').upsert({ id: stat.id, category: 'stat', data: { number: updated.number, description: updated.description, sourceName: updated.sourceName, sourceUrl: updated.sourceUrl ?? null } })
+                            .then(({ error }) => { if (error) console.error('[Scripts] stat upsert failed:', error) })
                         }} style={{ padding: '5px 12px', fontSize: 11, fontWeight: 600, background: c.accent, color: '#fff', border: 'none', borderRadius: 7, cursor: 'pointer', fontFamily: '"Plus Jakarta Sans", sans-serif' }}>Save</button>
                         <button onClick={() => setEditingStatId(null)} style={{ padding: '5px 12px', fontSize: 11, fontWeight: 600, background: 'transparent', color: c.textSecond, border: `1px solid ${c.border}`, borderRadius: 7, cursor: 'pointer', fontFamily: '"Plus Jakarta Sans", sans-serif' }}>Cancel</button>
                         <button onClick={() => {
                           setStats(prev => prev.filter(s => s.id !== stat.id))
                           setEditingStatId(null)
                           supabase.from('scripts').delete().eq('id', stat.id)
+                            .then(({ error }) => { if (error) console.error('[Scripts] stat delete failed:', error) })
                         }} style={{ marginLeft: 'auto', padding: '5px 8px', fontSize: 11, fontWeight: 600, color: c.danger, background: 'transparent', border: `1px solid ${c.danger}40`, borderRadius: 7, cursor: 'pointer', fontFamily: '"Plus Jakarta Sans", sans-serif' }}>Delete</button>
                       </div>
                     </div>
@@ -1358,6 +1390,7 @@ export default function Scripts() {
             setOpenerAnimKey(k => k + 1)
             setShowAddOpener(false)
             supabase.from('scripts').upsert({ id: newId, category: 'opener', data: { title: newOpener.title, script: newOpener.script }, sort_order: openers.length })
+              .then(({ error }) => { if (error) console.error('[Scripts] add opener failed:', error) })
           }}
         />
       )}
@@ -1374,6 +1407,7 @@ export default function Scripts() {
             setObjections(prev => [...prev, newObj])
             setShowAddObj(false)
             supabase.from('scripts').upsert({ id: newId, category: 'objection', data: { objection: newObj.objection, response: newObj.response }, sort_order: objections.length })
+              .then(({ error }) => { if (error) console.error('[Scripts] add objection failed:', error) })
           }}
         />
       )}
@@ -1402,7 +1436,8 @@ export default function Scripts() {
                         setStats(prev => [...prev, newStat])
                         setShowAddStat(false)
                         setStatDraft({ number: '', description: '', sourceName: '', sourceUrl: '' })
-                        supabase.from('scripts').upsert({ id: newId, category: 'stat', data: { number: newStat.number, description: newStat.description, sourceName: newStat.sourceName, sourceUrl: newStat.sourceUrl }, sort_order: stats.length })
+                        supabase.from('scripts').upsert({ id: newId, category: 'stat', data: { number: newStat.number, description: newStat.description, sourceName: newStat.sourceName, sourceUrl: newStat.sourceUrl ?? null }, sort_order: stats.length })
+                          .then(({ error }) => { if (error) console.error('[Scripts] add stat failed:', error) })
                       }}
                       disabled={!statDraft.number.trim() || !statDraft.description.trim()}
                       style={{ padding: '9px 18px', fontSize: 13, fontWeight: 600, background: statDraft.number.trim() && statDraft.description.trim() ? c.accent : c.bg3, color: statDraft.number.trim() && statDraft.description.trim() ? '#fff' : c.muted, border: 'none', borderRadius: 10, cursor: 'pointer', fontFamily: '"Plus Jakarta Sans", sans-serif' }}
