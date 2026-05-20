@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Component, useEffect, useState, type ReactNode } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import { getUserRole, signOut, type UserRole } from './lib/auth'
@@ -16,6 +16,37 @@ import Clients from './pages/Clients'
 import Calendar from './pages/Calendar'
 import Scripts from './pages/Scripts'
 import AdminPanel from './pages/AdminPanel'
+
+class PageErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; msg: string }> {
+  constructor(props: { children: ReactNode }) {
+    super(props)
+    this.state = { hasError: false, msg: '' }
+  }
+  static getDerivedStateFromError(err: Error) {
+    return { hasError: true, msg: err.message }
+  }
+  componentDidCatch(err: Error) {
+    console.error('PageErrorBoundary caught:', err)
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ width: '100vw', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, fontFamily: 'system-ui, sans-serif', background: '#f8fafc', color: '#0f172a' }}>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <p style={{ margin: 0, fontWeight: 700, fontSize: 16 }}>Something went wrong</p>
+          <p style={{ margin: 0, fontSize: 13, color: '#64748b', maxWidth: 400, textAlign: 'center' }}>{this.state.msg}</p>
+          <button
+            onClick={() => { this.setState({ hasError: false, msg: '' }); window.location.reload() }}
+            style={{ padding: '8px 20px', fontSize: 13, fontWeight: 600, background: '#0ea5e9', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+          >Reload page</button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
 
 type AuthState =
   | { status: 'loading' }
@@ -177,7 +208,7 @@ function AppRoutes({ auth }: { auth: AuthState }) {
         path="/admin/scripts"
         element={
           auth.status === 'authenticated' && auth.role === 'admin'
-            ? <Scripts />
+            ? <PageErrorBoundary><Scripts /></PageErrorBoundary>
             : auth.status === 'authenticated'
             ? <Navigate to="/dashboard" replace />
             : <Navigate to="/login" replace />
@@ -187,7 +218,7 @@ function AppRoutes({ auth }: { auth: AuthState }) {
         path="/dashboard/scripts"
         element={
           auth.status === 'authenticated'
-            ? <Scripts />
+            ? <PageErrorBoundary><Scripts /></PageErrorBoundary>
             : <Navigate to="/login" replace />
         }
       />

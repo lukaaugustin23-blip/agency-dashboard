@@ -571,8 +571,8 @@ export default function Scripts() {
   const [callerName, setCallerName] = useState<string | null>(null)
   const [signOutHov, setSignOutHov] = useState(false)
 
-  // Openers state
-  const [openers, setOpeners] = useState<Opener[]>([])
+  // Openers state — seed with defaults so page never renders empty
+  const [openers, setOpeners] = useState<Opener[]>(INITIAL_OPENERS)
   const [openerIdx, setOpenerIdx] = useState(0)
   const [openerAnimKey, setOpenerAnimKey] = useState(0)
   const [editingOpenerId, setEditingOpenerId] = useState<number | null>(null)
@@ -580,14 +580,14 @@ export default function Scripts() {
   const [showAddOpener, setShowAddOpener] = useState(false)
 
   // Objections state
-  const [objections, setObjections] = useState<Objection[]>([])
+  const [objections, setObjections] = useState<Objection[]>(INITIAL_OBJECTIONS)
   const [openObjId, setOpenObjId] = useState<number | null>(null)
   const [editingObjId, setEditingObjId] = useState<number | null>(null)
   const [objDraft, setObjDraft] = useState({ objection: '', response: '' })
   const [showAddObj, setShowAddObj] = useState(false)
 
   // Stats state
-  const [stats, setStats] = useState<Stat[]>([])
+  const [stats, setStats] = useState<Stat[]>(INITIAL_STATS)
   const [editingStatId, setEditingStatId] = useState<number | null>(null)
   const [statDraft, setStatDraft] = useState({ number: '', description: '', sourceName: '', sourceUrl: '' })
   const [showAddStat, setShowAddStat] = useState(false)
@@ -614,46 +614,55 @@ export default function Scripts() {
 
   // ── Supabase data loading ───────────────────────────────────────────
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async function loadData() {
-    const [{ data: scriptRows }, { data: sugRows }] = await Promise.all([
-      supabase.from('scripts').select('*').order('sort_order'),
-      supabase.from('suggestions').select('*').order('created_at'),
-    ])
-    if (scriptRows && scriptRows.length > 0) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setOpeners((scriptRows as any[]).filter(r => r.category === 'opener').map(r => ({ id: Number(r.id), ...r.data } as Opener)))
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setObjections((scriptRows as any[]).filter(r => r.category === 'objection').map(r => ({ id: Number(r.id), ...r.data } as Objection)))
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setStats((scriptRows as any[]).filter(r => r.category === 'stat').map(r => ({ id: Number(r.id), ...r.data } as Stat)))
-    } else {
-      // First run — seed with hardcoded defaults
-      const rows = [
-        ...INITIAL_OPENERS.map((o, i) => ({ id: o.id, category: 'opener', data: { title: o.title, script: o.script }, sort_order: i })),
-        ...INITIAL_OBJECTIONS.map((o, i) => ({ id: o.id, category: 'objection', data: { objection: o.objection, response: o.response }, sort_order: i })),
-        ...INITIAL_STATS.map((s, i) => ({ id: s.id, category: 'stat', data: { number: s.number, description: s.description, sourceName: s.sourceName, sourceUrl: s.sourceUrl }, sort_order: i })),
-      ]
-      await supabase.from('scripts').upsert(rows)
-      setOpeners(INITIAL_OPENERS)
-      setObjections(INITIAL_OBJECTIONS)
-      setStats(INITIAL_STATS)
-    }
-    if (sugRows) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setSuggestions((sugRows as any[]).map(r => ({
-        id: Number(r.id),
-        type: r.type as SuggestionType,
-        callerName: r.caller_name as string,
-        targetId: r.target_id != null ? Number(r.target_id) : undefined,
-        title: r.title ?? undefined,
-        content: r.content as string,
-        objectionText: r.objection_text ?? undefined,
-        reason: r.reason ?? undefined,
-        statUrl: r.stat_url ?? undefined,
-        status: r.status as 'pending' | 'approved' | 'rejected',
-        timestamp: r.timestamp as string,
-      })))
+    try {
+      const [{ data: scriptRows, error: scriptErr }, { data: sugRows }] = await Promise.all([
+        supabase.from('scripts').select('*').order('sort_order'),
+        supabase.from('suggestions').select('*').order('created_at'),
+      ])
+
+      if (scriptErr) {
+        // Table doesn't exist yet — page already shows INITIAL_* defaults, nothing to do
+        console.warn('Scripts table not found (run schema.sql in Supabase):', scriptErr.message)
+      } else if (scriptRows && scriptRows.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const rows = scriptRows as any[]
+        const dbOpeners = rows.filter(r => r.category === 'opener').map(r => ({ id: Number(r.id), ...r.data } as Opener))
+        const dbObjections = rows.filter(r => r.category === 'objection').map(r => ({ id: Number(r.id), ...r.data } as Objection))
+        const dbStats = rows.filter(r => r.category === 'stat').map(r => ({ id: Number(r.id), ...r.data } as Stat))
+        if (dbOpeners.length > 0) setOpeners(dbOpeners)
+        if (dbObjections.length > 0) setObjections(dbObjections)
+        if (dbStats.length > 0) setStats(dbStats)
+      } else {
+        // Table exists but empty — seed with hardcoded defaults
+        const seedRows = [
+          ...INITIAL_OPENERS.map((o, i) => ({ id: o.id, category: 'opener', data: { title: o.title, script: o.script }, sort_order: i })),
+          ...INITIAL_OBJECTIONS.map((o, i) => ({ id: o.id, category: 'objection', data: { objection: o.objection, response: o.response }, sort_order: i })),
+          ...INITIAL_STATS.map((s, i) => ({ id: s.id, category: 'stat', data: { number: s.number, description: s.description, sourceName: s.sourceName, sourceUrl: s.sourceUrl }, sort_order: i })),
+        ]
+        await supabase.from('scripts').upsert(seedRows)
+        // State already shows INITIAL_* — no setters needed
+      }
+
+      if (sugRows && sugRows.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setSuggestions((sugRows as any[]).map(r => ({
+          id: Number(r.id),
+          type: r.type as SuggestionType,
+          callerName: r.caller_name as string,
+          targetId: r.target_id != null ? Number(r.target_id) : undefined,
+          title: r.title ?? undefined,
+          content: r.content as string,
+          objectionText: r.objection_text ?? undefined,
+          reason: r.reason ?? undefined,
+          statUrl: r.stat_url ?? undefined,
+          status: r.status as 'pending' | 'approved' | 'rejected',
+          timestamp: r.timestamp as string,
+        })))
+      }
+    } catch (err) {
+      console.error('Scripts: loadData error — showing defaults', err)
+      // State already initialized from INITIAL_* — page is usable
     }
   }
 
@@ -984,6 +993,11 @@ export default function Scripts() {
 
               {/* Opener card */}
               <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                {!currentOpener ? (
+                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: 13 }}>
+                    No openers yet. {isAdmin ? 'Click "+ Add Opener" to create one.' : ''}
+                  </div>
+                ) : (
                 <div
                   key={openerAnimKey}
                   style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 10, animation: 'openerFade 0.25s ease both', overflow: 'hidden' }}
@@ -1045,10 +1059,11 @@ export default function Scripts() {
                     </div>
                   )}
                 </div>
+                )}
 
                 {/* Counter */}
                 <p style={{ margin: '8px 0 0', fontSize: 11, color: c.muted, textAlign: 'center', flexShrink: 0 }}>
-                  Opener {openerIdx + 1} of {openers.length}
+                  {openers.length > 0 ? `Opener ${openerIdx + 1} of ${openers.length}` : ''}
                 </p>
               </div>
 
