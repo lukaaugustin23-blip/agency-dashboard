@@ -87,7 +87,6 @@ const INITIAL_OBJECTIONS: Objection[] = [
   { id: 6, objection: '"I\'m too busy right now"',                   response: "I completely respect that — running a business is no joke. That's actually exactly why this works so well though. We handle everything — you don't have to do anything except one 30-minute call to tell us about your business. After that, we build it, you approve it, done. Can I grab just 2 minutes to explain how easy we make it?" },
 ]
 
-const INITIAL_SUGGESTIONS: Suggestion[] = []
 
 const COLS = 3
 
@@ -573,7 +572,7 @@ export default function Scripts() {
   const [signOutHov, setSignOutHov] = useState(false)
 
   // Openers state
-  const [openers, setOpeners] = useState<Opener[]>(INITIAL_OPENERS)
+  const [openers, setOpeners] = useState<Opener[]>([])
   const [openerIdx, setOpenerIdx] = useState(0)
   const [openerAnimKey, setOpenerAnimKey] = useState(0)
   const [editingOpenerId, setEditingOpenerId] = useState<number | null>(null)
@@ -581,21 +580,21 @@ export default function Scripts() {
   const [showAddOpener, setShowAddOpener] = useState(false)
 
   // Objections state
-  const [objections, setObjections] = useState<Objection[]>(INITIAL_OBJECTIONS)
+  const [objections, setObjections] = useState<Objection[]>([])
   const [openObjId, setOpenObjId] = useState<number | null>(null)
   const [editingObjId, setEditingObjId] = useState<number | null>(null)
   const [objDraft, setObjDraft] = useState({ objection: '', response: '' })
   const [showAddObj, setShowAddObj] = useState(false)
 
   // Stats state
-  const [stats, setStats] = useState<Stat[]>(INITIAL_STATS)
+  const [stats, setStats] = useState<Stat[]>([])
   const [editingStatId, setEditingStatId] = useState<number | null>(null)
   const [statDraft, setStatDraft] = useState({ number: '', description: '', sourceName: '', sourceUrl: '' })
   const [showAddStat, setShowAddStat] = useState(false)
   const [statHover, setStatHover] = useState<number | null>(null)
 
   // Suggestions state
-  const [suggestions, setSuggestions] = useState<Suggestion[]>(INITIAL_SUGGESTIONS)
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [suggestModal, setSuggestModal] = useState<{
     mode: SuggestionType
     targetId?: number
@@ -612,6 +611,52 @@ export default function Scripts() {
   const myPendingObjestions = suggestions.filter(s => s.status === 'pending' && s.callerName === callerName && (s.type === 'new-objection' || s.type === 'edit-objection')).length
 
   useEffect(() => { localStorage.setItem('agency-theme', theme) }, [theme])
+
+  // ── Supabase data loading ───────────────────────────────────────────
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async function loadData() {
+    const [{ data: scriptRows }, { data: sugRows }] = await Promise.all([
+      supabase.from('scripts').select('*').order('sort_order'),
+      supabase.from('suggestions').select('*').order('created_at'),
+    ])
+    if (scriptRows && scriptRows.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setOpeners((scriptRows as any[]).filter(r => r.category === 'opener').map(r => ({ id: Number(r.id), ...r.data } as Opener)))
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setObjections((scriptRows as any[]).filter(r => r.category === 'objection').map(r => ({ id: Number(r.id), ...r.data } as Objection)))
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setStats((scriptRows as any[]).filter(r => r.category === 'stat').map(r => ({ id: Number(r.id), ...r.data } as Stat)))
+    } else {
+      // First run — seed with hardcoded defaults
+      const rows = [
+        ...INITIAL_OPENERS.map((o, i) => ({ id: o.id, category: 'opener', data: { title: o.title, script: o.script }, sort_order: i })),
+        ...INITIAL_OBJECTIONS.map((o, i) => ({ id: o.id, category: 'objection', data: { objection: o.objection, response: o.response }, sort_order: i })),
+        ...INITIAL_STATS.map((s, i) => ({ id: s.id, category: 'stat', data: { number: s.number, description: s.description, sourceName: s.sourceName, sourceUrl: s.sourceUrl }, sort_order: i })),
+      ]
+      await supabase.from('scripts').upsert(rows)
+      setOpeners(INITIAL_OPENERS)
+      setObjections(INITIAL_OBJECTIONS)
+      setStats(INITIAL_STATS)
+    }
+    if (sugRows) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setSuggestions((sugRows as any[]).map(r => ({
+        id: Number(r.id),
+        type: r.type as SuggestionType,
+        callerName: r.caller_name as string,
+        targetId: r.target_id != null ? Number(r.target_id) : undefined,
+        title: r.title ?? undefined,
+        content: r.content as string,
+        objectionText: r.objection_text ?? undefined,
+        reason: r.reason ?? undefined,
+        statUrl: r.stat_url ?? undefined,
+        status: r.status as 'pending' | 'approved' | 'rejected',
+        timestamp: r.timestamp as string,
+      })))
+    }
+  }
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       const u = data.session?.user ?? null
@@ -621,6 +666,7 @@ export default function Scripts() {
         setRole(r)
         if (r === 'caller') setCallerName(CALLER_EMAIL_MAP[u.email] ?? null)
       }
+      if (u) loadData()
     })
   }, [])
 
@@ -650,8 +696,11 @@ export default function Scripts() {
     setOpenerDraft({ title: opener.title, script: opener.script })
   }
   function saveOpener() {
-    setOpeners(prev => prev.map(o => o.id === editingOpenerId ? { ...o, ...openerDraft } : o))
+    const id = editingOpenerId!
+    const updated = { ...openers.find(o => o.id === id)!, ...openerDraft }
+    setOpeners(prev => prev.map(o => o.id === id ? updated : o))
     setEditingOpenerId(null)
+    supabase.from('scripts').upsert({ id, category: 'opener', data: { title: updated.title, script: updated.script } })
   }
 
   function startEditObj(obj: Objection) {
@@ -660,13 +709,17 @@ export default function Scripts() {
     setOpenObjId(null)
   }
   function saveObj() {
-    setObjections(prev => prev.map(o => o.id === editingObjId ? { ...o, ...objDraft } : o))
+    const id = editingObjId!
+    const updated = { ...objections.find(o => o.id === id)!, ...objDraft }
+    setObjections(prev => prev.map(o => o.id === id ? updated : o))
     setEditingObjId(null)
+    supabase.from('scripts').upsert({ id, category: 'objection', data: { objection: updated.objection, response: updated.response } })
   }
   function deleteObj(id: number) {
     setObjections(prev => prev.filter(o => o.id !== id))
     if (openObjId === id) setOpenObjId(null)
     if (editingObjId === id) setEditingObjId(null)
+    supabase.from('scripts').delete().eq('id', id)
   }
 
   function toggleObj(id: number) {
@@ -692,31 +745,70 @@ export default function Scripts() {
     setSuggestions(prev => [...prev, newSug])
     setSuggestModal(null)
     setToastMsg('Suggestion submitted — admin will review it soon!')
+    supabase.from('suggestions').insert({
+      id: newSug.id,
+      type: newSug.type,
+      caller_name: newSug.callerName,
+      target_id: newSug.targetId ?? null,
+      title: newSug.title ?? null,
+      content: newSug.content,
+      objection_text: newSug.objectionText ?? null,
+      reason: newSug.reason ?? null,
+      stat_url: newSug.statUrl ?? null,
+      status: 'pending',
+      timestamp: 'just now',
+    })
   }
 
   function approveSuggestion(id: number) {
     const sug = suggestions.find(s => s.id === id)
     if (!sug) return
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let scriptRow: any | null = null
     if (sug.type === 'new-opener') {
-      setOpeners(prev => [...prev, { id: Date.now(), title: sug.title ?? 'New Opener', script: sug.content }])
+      const newId = Date.now()
+      const o = { id: newId, title: sug.title ?? 'New Opener', script: sug.content }
+      setOpeners(prev => [...prev, o])
+      scriptRow = { id: newId, category: 'opener', data: { title: o.title, script: o.script } }
     } else if (sug.type === 'edit-opener') {
       setOpeners(prev => prev.map(o => o.id === sug.targetId ? { ...o, script: sug.content } : o))
+      if (sug.targetId != null) {
+        const existing = openers.find(o => o.id === sug.targetId)
+        scriptRow = { id: sug.targetId, category: 'opener', data: { title: existing?.title ?? '', script: sug.content } }
+      }
     } else if (sug.type === 'new-objection') {
-      setObjections(prev => [...prev, { id: Date.now(), objection: sug.objectionText ?? '', response: sug.content }])
+      const newId = Date.now()
+      const o = { id: newId, objection: sug.objectionText ?? '', response: sug.content }
+      setObjections(prev => [...prev, o])
+      scriptRow = { id: newId, category: 'objection', data: { objection: o.objection, response: o.response } }
     } else if (sug.type === 'edit-objection') {
       setObjections(prev => prev.map(o => o.id === sug.targetId ? { ...o, response: sug.content } : o))
+      if (sug.targetId != null) {
+        const existing = objections.find(o => o.id === sug.targetId)
+        scriptRow = { id: sug.targetId, category: 'objection', data: { objection: existing?.objection ?? '', response: sug.content } }
+      }
     } else if (sug.type === 'new-stat') {
-      setStats(prev => [...prev, { id: Date.now(), number: sug.title ?? '', description: sug.content, sourceName: sug.reason ?? '', sourceUrl: sug.statUrl }])
+      const newId = Date.now()
+      const s = { id: newId, number: sug.title ?? '', description: sug.content, sourceName: sug.reason ?? '', sourceUrl: sug.statUrl }
+      setStats(prev => [...prev, s])
+      scriptRow = { id: newId, category: 'stat', data: { number: s.number, description: s.description, sourceName: s.sourceName, sourceUrl: s.sourceUrl } }
     } else if (sug.type === 'edit-stat') {
       setStats(prev => prev.map(s => s.id === sug.targetId ? { ...s, number: sug.title ?? s.number, description: sug.content, sourceName: sug.reason ?? s.sourceName, sourceUrl: sug.statUrl ?? s.sourceUrl } : s))
+      if (sug.targetId != null) {
+        const existing = stats.find(s => s.id === sug.targetId)
+        if (existing) scriptRow = { id: sug.targetId, category: 'stat', data: { number: sug.title ?? existing.number, description: sug.content, sourceName: sug.reason ?? existing.sourceName, sourceUrl: sug.statUrl ?? existing.sourceUrl } }
+      }
     }
     setSuggestions(prev => prev.map(s => s.id === id ? { ...s, status: 'approved' } : s))
     setToastMsg('Suggestion approved and applied!')
+    if (scriptRow) supabase.from('scripts').upsert(scriptRow)
+    supabase.from('suggestions').update({ status: 'approved' }).eq('id', id)
   }
 
   function rejectSuggestion(id: number) {
     setSuggestions(prev => prev.map(s => s.id === id ? { ...s, status: 'rejected' } : s))
     setToastMsg('Suggestion rejected.')
+    supabase.from('suggestions').update({ status: 'rejected' }).eq('id', id)
   }
 
   // Build grid items with inline expansion
@@ -1014,9 +1106,18 @@ export default function Scripts() {
                       <input value={statDraft.sourceName} onChange={e => setStatDraft(d => ({ ...d, sourceName: e.target.value }))} style={{ padding: '6px 8px', fontSize: 11, background: c.bg3, border: `1px solid ${c.border}`, borderRadius: 7, color: c.textSecond, outline: 'none', fontFamily: '"Plus Jakarta Sans", sans-serif' }} placeholder="Source name" />
                       <input value={statDraft.sourceUrl} onChange={e => setStatDraft(d => ({ ...d, sourceUrl: e.target.value }))} style={{ padding: '6px 8px', fontSize: 11, background: c.bg3, border: `1px solid ${c.border}`, borderRadius: 7, color: c.textSecond, outline: 'none', fontFamily: '"Plus Jakarta Sans", sans-serif' }} placeholder="https://…" />
                       <div style={{ display: 'flex', gap: 6 }}>
-                        <button onClick={() => { setStats(prev => prev.map(s => s.id === stat.id ? { ...s, ...statDraft } : s)); setEditingStatId(null) }} style={{ padding: '5px 12px', fontSize: 11, fontWeight: 600, background: c.accent, color: '#fff', border: 'none', borderRadius: 7, cursor: 'pointer', fontFamily: '"Plus Jakarta Sans", sans-serif' }}>Save</button>
+                        <button onClick={() => {
+                          const updated = { ...stat, ...statDraft }
+                          setStats(prev => prev.map(s => s.id === stat.id ? updated : s))
+                          setEditingStatId(null)
+                          supabase.from('scripts').upsert({ id: stat.id, category: 'stat', data: { number: updated.number, description: updated.description, sourceName: updated.sourceName, sourceUrl: updated.sourceUrl } })
+                        }} style={{ padding: '5px 12px', fontSize: 11, fontWeight: 600, background: c.accent, color: '#fff', border: 'none', borderRadius: 7, cursor: 'pointer', fontFamily: '"Plus Jakarta Sans", sans-serif' }}>Save</button>
                         <button onClick={() => setEditingStatId(null)} style={{ padding: '5px 12px', fontSize: 11, fontWeight: 600, background: 'transparent', color: c.textSecond, border: `1px solid ${c.border}`, borderRadius: 7, cursor: 'pointer', fontFamily: '"Plus Jakarta Sans", sans-serif' }}>Cancel</button>
-                        <button onClick={() => { setStats(prev => prev.filter(s => s.id !== stat.id)); setEditingStatId(null) }} style={{ marginLeft: 'auto', padding: '5px 8px', fontSize: 11, fontWeight: 600, color: c.danger, background: 'transparent', border: `1px solid ${c.danger}40`, borderRadius: 7, cursor: 'pointer', fontFamily: '"Plus Jakarta Sans", sans-serif' }}>Delete</button>
+                        <button onClick={() => {
+                          setStats(prev => prev.filter(s => s.id !== stat.id))
+                          setEditingStatId(null)
+                          supabase.from('scripts').delete().eq('id', stat.id)
+                        }} style={{ marginLeft: 'auto', padding: '5px 8px', fontSize: 11, fontWeight: 600, color: c.danger, background: 'transparent', border: `1px solid ${c.danger}40`, borderRadius: 7, cursor: 'pointer', fontFamily: '"Plus Jakarta Sans", sans-serif' }}>Delete</button>
                       </div>
                     </div>
                   )
@@ -1235,10 +1336,13 @@ export default function Scripts() {
           mode="opener"
           onClose={() => setShowAddOpener(false)}
           onAdd={({ title, script }) => {
-            setOpeners(prev => [...prev, { id: Date.now(), title: title!, script: script! }])
+            const newId = Date.now()
+            const newOpener = { id: newId, title: title!, script: script! }
+            setOpeners(prev => [...prev, newOpener])
             setOpenerIdx(openers.length)
             setOpenerAnimKey(k => k + 1)
             setShowAddOpener(false)
+            supabase.from('scripts').upsert({ id: newId, category: 'opener', data: { title: newOpener.title, script: newOpener.script }, sort_order: openers.length })
           }}
         />
       )}
@@ -1250,8 +1354,11 @@ export default function Scripts() {
           mode="objection"
           onClose={() => setShowAddObj(false)}
           onAdd={({ objection, response }) => {
-            setObjections(prev => [...prev, { id: Date.now(), objection: objection!, response: response! }])
+            const newId = Date.now()
+            const newObj = { id: newId, objection: objection!, response: response! }
+            setObjections(prev => [...prev, newObj])
             setShowAddObj(false)
+            supabase.from('scripts').upsert({ id: newId, category: 'objection', data: { objection: newObj.objection, response: newObj.response }, sort_order: objections.length })
           }}
         />
       )}
@@ -1275,9 +1382,12 @@ export default function Scripts() {
                     <button
                       onClick={() => {
                         if (!statDraft.number.trim() || !statDraft.description.trim()) return
-                        setStats(prev => [...prev, { id: Date.now(), number: statDraft.number, description: statDraft.description, sourceName: statDraft.sourceName, sourceUrl: statDraft.sourceUrl || undefined }])
+                        const newId = Date.now()
+                        const newStat = { id: newId, number: statDraft.number, description: statDraft.description, sourceName: statDraft.sourceName, sourceUrl: statDraft.sourceUrl || undefined }
+                        setStats(prev => [...prev, newStat])
                         setShowAddStat(false)
                         setStatDraft({ number: '', description: '', sourceName: '', sourceUrl: '' })
+                        supabase.from('scripts').upsert({ id: newId, category: 'stat', data: { number: newStat.number, description: newStat.description, sourceName: newStat.sourceName, sourceUrl: newStat.sourceUrl }, sort_order: stats.length })
                       }}
                       disabled={!statDraft.number.trim() || !statDraft.description.trim()}
                       style={{ padding: '9px 18px', fontSize: 13, fontWeight: 600, background: statDraft.number.trim() && statDraft.description.trim() ? c.accent : c.bg3, color: statDraft.number.trim() && statDraft.description.trim() ? '#fff' : c.muted, border: 'none', borderRadius: 10, cursor: 'pointer', fontFamily: '"Plus Jakarta Sans", sans-serif' }}

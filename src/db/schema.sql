@@ -200,3 +200,60 @@ create policy activity_log_auth_insert on activity_log
 alter publication supabase_realtime add table leads;
 alter publication supabase_realtime add table meetings;
 alter publication supabase_realtime add table activity_log;
+
+-- ── scripts ─────────────────────────────────────────────────
+
+create table if not exists scripts (
+  id           bigint      primary key,
+  category     text        not null,  -- 'opener' | 'objection' | 'stat'
+  data         jsonb       not null default '{}',
+  sort_order   int         not null default 0,
+  updated_at   timestamptz not null default now()
+);
+
+create or replace trigger scripts_updated_at
+  before update on scripts
+  for each row execute function update_updated_at();
+
+alter table scripts enable row level security;
+
+create policy scripts_admin_all on scripts
+  for all
+  using (is_admin())
+  with check (is_admin());
+
+create policy scripts_auth_read on scripts
+  for select
+  using (auth.role() = 'authenticated');
+
+-- ── suggestions ─────────────────────────────────────────────
+
+create table if not exists suggestions (
+  id             bigint      primary key,
+  type           text        not null,
+  caller_name    text        not null,
+  target_id      bigint,
+  title          text,
+  content        text        not null default '',
+  objection_text text,
+  reason         text,
+  stat_url       text,
+  status         text        not null default 'pending',
+  timestamp      text        not null default 'just now',
+  created_at     timestamptz not null default now()
+);
+
+alter table suggestions enable row level security;
+
+create policy suggestions_admin_all on suggestions
+  for all
+  using (is_admin())
+  with check (is_admin());
+
+create policy suggestions_auth_read on suggestions
+  for select
+  using (auth.role() = 'authenticated');
+
+create policy suggestions_caller_insert on suggestions
+  for insert
+  with check (not is_admin() and auth.role() = 'authenticated');
